@@ -61,7 +61,10 @@ input:focus,select:focus{border-color:#ff6d65;box-shadow:0 0 0 3px rgba(255,59,4
 .contact{display:grid;grid-template-columns:1fr .9fr;gap:18px}.contact-card h2{font-size:40px;letter-spacing:-1.8px;margin:8px 0}.contact-card p{color:var(--muted)}.contact-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.notice{padding:15px;border:1px solid #59431d;background:rgba(255,176,32,.08);border-radius:14px;color:#e8cb91;font-size:12px}
 footer{padding:30px 0 42px;color:#7f8c9b;border-top:1px solid rgba(255,255,255,.06);font-size:12px}.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 .modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);display:none;padding:18px;overflow:auto}.modal.open{display:block}.sheet{max-width:880px;margin:20px auto;background:#101821;border:1px solid #2c3948;border-radius:24px;padding:22px;box-shadow:var(--shadow)}.sheet-top{display:flex;justify-content:space-between;gap:15px;align-items:start}.close{background:#1b2633;border:1px solid #334154;color:white;border-radius:11px;padding:9px 12px;cursor:pointer}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}.box{background:#0b1118;border:1px solid #253140;border-radius:15px;padding:15px}.box h4{margin:0 0 8px}.box ul{margin:0;padding-left:18px;color:#bac5d2}.box li{margin:7px 0}.steps-list{counter-reset:step;list-style:none!important;padding:0!important}.steps-list li{display:flex;gap:10px}.steps-list li:before{counter-increment:step;content:counter(step);flex:0 0 28px;height:28px;display:grid;place-items:center;border-radius:50%;background:var(--red);color:#fff;font-weight:900;font-size:12px}
+
+.video-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.video-card{background:linear-gradient(160deg,#121a24,#0c121a);border:1px solid var(--line);border-radius:20px;overflow:hidden}.video-frame{position:relative;aspect-ratio:16/9;background:#05080c}.video-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}.video-copy{padding:17px}.video-copy h3{margin:0 0 7px;font-size:18px}.video-copy p{margin:0;color:var(--muted);font-size:12px}.video-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.detail-video{margin-top:14px;border:1px solid #2a3747;border-radius:16px;overflow:hidden;background:#080d13}.detail-video .video-frame{aspect-ratio:16/9}.detail-video-copy{padding:14px}.detail-video-copy h4{margin:0 0 6px}.detail-video-copy p{margin:0;color:var(--muted);font-size:12px}.yt-search{margin-top:12px;display:flex;gap:9px;flex-wrap:wrap}
 @media(max-width:900px){.navlinks{display:none}.hero-grid,.toolbox,.contact{grid-template-columns:1fr}.hero{padding-top:52px}.hero-card{max-width:620px}.formgrid{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr 1fr}.features{grid-template-columns:1fr 1fr}.steps{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.video-grid{grid-template-columns:1fr}}
 @media(max-width:560px){.wrap{width:min(100% - 22px,1180px)}.nav{height:64px}.brand small{display:none}.btn.small.navcta{display:none}h1{font-size:48px;letter-spacing:-2.8px}.lead{font-size:16px}.hero{padding-top:38px}.formgrid,.cards,.features{grid-template-columns:1fr}.searchline,.obd-row{grid-template-columns:1fr}.section{padding:52px 0}.section-head{display:block}.section-head p{margin-top:12px}.quick{grid-template-columns:1fr}.contact-card h2{font-size:32px}}
 </style>
 </head>
@@ -69,7 +72,7 @@ footer{padding:30px 0 42px;color:#7f8c9b;border-top:1px solid rgba(255,255,255,.
 <header>
   <div class="wrap nav">
     <a class="brand" href="#inicio"><span class="logo">🔧</span><span>Motor<b>Fix</b> Pro<small>Reparación & diagnóstico</small></span></a>
-    <nav class="navlinks"><a href="#buscador">Buscador</a><a href="#reparaciones">Reparaciones</a><a href="#como-funciona">Cómo funciona</a><a href="#contacto">Contacto</a></nav>
+    <nav class="navlinks"><a href="#buscador">Buscador</a><a href="#reparaciones">Reparaciones</a><a href="#videos">Vídeos</a><a href="#como-funciona">Cómo funciona</a><a href="#contacto">Contacto</a></nav>
     <a class="btn primary small navcta" href="#buscador">Empezar diagnóstico</a>
   </div>
 </header>
@@ -126,6 +129,19 @@ footer{padding:30px 0 42px;color:#7f8c9b;border-top:1px solid rgba(255,255,255,.
   <div class="filterbar"><button class="chip active" data-filter="all">Todas</button><button class="chip" data-filter="Mantenimiento">Mantenimiento</button><button class="chip" data-filter="Frenos">Frenos</button><button class="chip" data-filter="Motor">Motor</button><button class="chip" data-filter="Electricidad">Electricidad</button></div>
   <div id="repairList" class="cards"></div>
 </div>
+</section>
+
+<section class="section" id="videos">
+  <div class="wrap">
+    <div class="section-head"><div><div class="kicker">Videotutoriales</div><h2>Aprende viendo el proceso</h2></div><p>Vídeos explicativos integrados directamente desde YouTube. Para una reparación real, confirma siempre el procedimiento exacto de tu vehículo.</p></div>
+    <div class="box" style="margin-bottom:18px"><h3 style="margin-top:0">🎯 Vídeos para el vehículo seleccionado</h3><p id="videoVehicleSummary" style="color:var(--muted);margin:0 0 12px">Selecciona marca, modelo, año y motor para afinar los tutoriales.</p><div id="vehicleVideoLinks" class="yt-search"></div></div>
+    <div class="video-grid">
+      <article class="video-card"><div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/kWNAYHNzR-s" title="Cómo cambiar el aceite del motor y el filtro" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><div class="video-copy"><h3>🛢️ Cambio de aceite y filtro</h3><p>Tutorial general de AUTODOC sobre el cambio de aceite del motor y filtro.</p></div></article>
+      <article class="video-card"><div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/vXgHn8rUw_c" title="Cómo cambiar las pastillas de freno" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><div class="video-copy"><h3>🛑 Pastillas de freno</h3><p>Tutorial general de AUTODOC para comprender el proceso de sustitución.</p></div></article>
+      <article class="video-card"><div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/mYtTUrtYKDA" title="Cómo cambiar el filtro de aire" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><div class="video-copy"><h3>🌬️ Filtro de aire</h3><p>Vídeo paso a paso de sustitución del filtro de aire del motor.</p></div></article>
+      <article class="video-card"><div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/bAozlLVKg4I" title="Cómo cambiar las bujías" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><div class="video-copy"><h3>⚡ Bujías</h3><p>Tutorial general de AUTODOC para la sustitución de bujías en motores gasolina.</p></div></article>
+    </div>
+  </div>
 </section>
 
 <section class="section band" id="como-funciona">
@@ -798,11 +814,11 @@ const fallbackVehicles=[
 let vehicles=[...fallbackVehicles];
 
 const repairs=[
- {id:1,cat:"Mantenimiento",icon:"🛢️",title:"Cambio de aceite y filtro",desc:"Mantenimiento esencial para proteger el motor y conservar una lubricación correcta.",difficulty:"Fácil",time:"35–60 min",cost:"35–90 €",tools:["Juego de llaves","Recipiente para aceite","Llave de filtro","Embudo","Guantes"],parts:["Aceite con especificación correcta","Filtro de aceite","Arandela del tapón si aplica"],warnings:["Trabaja con el vehículo estable y en superficie plana.","No viertas aceite usado al desagüe; entrégalo en un punto autorizado."],steps:["Confirma la especificación y cantidad de aceite del motor.","Eleva el vehículo de forma segura si necesitas acceso inferior.","Retira el tapón de vaciado y deja escurrir el aceite.","Sustituye el filtro de aceite y lubrica su junta si corresponde.","Monta el tapón con su arandela y el par especificado por el fabricante.","Rellena gradualmente, arranca brevemente, espera y verifica nivel y posibles fugas."]},
- {id:2,cat:"Frenos",icon:"🛑",title:"Sustitución de pastillas de freno",desc:"Guía de referencia para revisar y sustituir pastillas con comprobación visual del disco.",difficulty:"Media",time:"60–120 min",cost:"45–180 €",tools:["Gato y borriquetas","Llave de rueda","Juego de vasos","Útil retrae pistones"],parts:["Juego de pastillas compatible","Sensor de desgaste si equipa"],warnings:["Nunca trabajes bajo un coche sostenido únicamente por el gato.","Después del montaje, bombea el pedal antes de mover el vehículo."],steps:["Afloja ligeramente los tornillos de rueda antes de elevar.","Eleva el vehículo y apóyalo correctamente.","Retira rueda y comprueba estado de disco, latiguillos y pinza.","Desmonta la pinza según el sistema y retrae el pistón con el útil adecuado.","Monta pastillas nuevas respetando chapas, muelles y sensores.","Monta la pinza y la rueda con los pares correctos.","Bombea el pedal de freno y verifica nivel del líquido antes de circular."]},
+ {id:1,videoId:"kWNAYHNzR-s",cat:"Mantenimiento",icon:"🛢️",title:"Cambio de aceite y filtro",desc:"Mantenimiento esencial para proteger el motor y conservar una lubricación correcta.",difficulty:"Fácil",time:"35–60 min",cost:"35–90 €",tools:["Juego de llaves","Recipiente para aceite","Llave de filtro","Embudo","Guantes"],parts:["Aceite con especificación correcta","Filtro de aceite","Arandela del tapón si aplica"],warnings:["Trabaja con el vehículo estable y en superficie plana.","No viertas aceite usado al desagüe; entrégalo en un punto autorizado."],steps:["Confirma la especificación y cantidad de aceite del motor.","Eleva el vehículo de forma segura si necesitas acceso inferior.","Retira el tapón de vaciado y deja escurrir el aceite.","Sustituye el filtro de aceite y lubrica su junta si corresponde.","Monta el tapón con su arandela y el par especificado por el fabricante.","Rellena gradualmente, arranca brevemente, espera y verifica nivel y posibles fugas."]},
+ {id:2,videoId:"vXgHn8rUw_c",cat:"Frenos",icon:"🛑",title:"Sustitución de pastillas de freno",desc:"Guía de referencia para revisar y sustituir pastillas con comprobación visual del disco.",difficulty:"Media",time:"60–120 min",cost:"45–180 €",tools:["Gato y borriquetas","Llave de rueda","Juego de vasos","Útil retrae pistones"],parts:["Juego de pastillas compatible","Sensor de desgaste si equipa"],warnings:["Nunca trabajes bajo un coche sostenido únicamente por el gato.","Después del montaje, bombea el pedal antes de mover el vehículo."],steps:["Afloja ligeramente los tornillos de rueda antes de elevar.","Eleva el vehículo y apóyalo correctamente.","Retira rueda y comprueba estado de disco, latiguillos y pinza.","Desmonta la pinza según el sistema y retrae el pistón con el útil adecuado.","Monta pastillas nuevas respetando chapas, muelles y sensores.","Monta la pinza y la rueda con los pares correctos.","Bombea el pedal de freno y verifica nivel del líquido antes de circular."]},
  {id:3,cat:"Electricidad",icon:"🔋",title:"Cambio de batería",desc:"Sustitución de batería de 12 V con comprobaciones básicas del sistema de carga.",difficulty:"Fácil",time:"20–45 min",cost:"80–220 €",tools:["Llaves o vasos","Guantes","Multímetro opcional"],parts:["Batería de capacidad y tecnología compatibles"],warnings:["Algunos vehículos requieren registro/codificación de la batería nueva.","Evita cortocircuitar los bornes con herramientas metálicas."],steps:["Apaga el vehículo y conserva los datos necesarios de radio/configuración.","Desconecta primero el borne negativo y después el positivo.","Retira la sujeción y extrae la batería con cuidado.","Coloca la nueva batería y fija correctamente la sujeción.","Conecta primero positivo y después negativo.","Comprueba arranque y, si aplica, registra la batería con herramienta de diagnosis."]},
- {id:4,cat:"Motor",icon:"🌬️",title:"Cambio de filtro de aire",desc:"Mejora el flujo de admisión y ayuda a mantener el motor funcionando correctamente.",difficulty:"Fácil",time:"15–30 min",cost:"15–45 €",tools:["Destornillador o Torx según modelo","Aspirador opcional"],parts:["Filtro de aire compatible"],warnings:["Evita que entren objetos o suciedad en la admisión."],steps:["Localiza la caja del filtro de aire.","Abre grapas o tornillos de la tapa.","Retira el filtro antiguo y observa su orientación.","Limpia suavemente la caja sin introducir suciedad en la admisión.","Instala el filtro nuevo correctamente asentado.","Cierra la tapa asegurando todos los puntos de fijación."]},
- {id:5,cat:"Motor",icon:"⚡",title:"Sustitución de bujías",desc:"Revisión y cambio de bujías en motores gasolina siguiendo la especificación correcta.",difficulty:"Media",time:"45–120 min",cost:"30–140 €",tools:["Vaso de bujía","Carraca y alargador","Llave dinamométrica"],parts:["Bujías con referencia correcta"],warnings:["Trabaja con el motor frío.","El apriete incorrecto puede dañar la rosca de la culata."],steps:["Retira cubiertas necesarias y desconecta las bobinas.","Limpia alrededor de los pozos antes de extraer las bujías.","Retira las bujías una a una e inspecciona su estado.","Compara referencia, longitud y tipo de las nuevas.","Instálalas a mano primero para evitar roscado cruzado.","Aprieta al par indicado por el fabricante y vuelve a montar las bobinas."]},
+ {id:4,videoId:"mYtTUrtYKDA",cat:"Motor",icon:"🌬️",title:"Cambio de filtro de aire",desc:"Mejora el flujo de admisión y ayuda a mantener el motor funcionando correctamente.",difficulty:"Fácil",time:"15–30 min",cost:"15–45 €",tools:["Destornillador o Torx según modelo","Aspirador opcional"],parts:["Filtro de aire compatible"],warnings:["Evita que entren objetos o suciedad en la admisión."],steps:["Localiza la caja del filtro de aire.","Abre grapas o tornillos de la tapa.","Retira el filtro antiguo y observa su orientación.","Limpia suavemente la caja sin introducir suciedad en la admisión.","Instala el filtro nuevo correctamente asentado.","Cierra la tapa asegurando todos los puntos de fijación."]},
+ {id:5,videoId:"bAozlLVKg4I",cat:"Motor",icon:"⚡",title:"Sustitución de bujías",desc:"Revisión y cambio de bujías en motores gasolina siguiendo la especificación correcta.",difficulty:"Media",time:"45–120 min",cost:"30–140 €",tools:["Vaso de bujía","Carraca y alargador","Llave dinamométrica"],parts:["Bujías con referencia correcta"],warnings:["Trabaja con el motor frío.","El apriete incorrecto puede dañar la rosca de la culata."],steps:["Retira cubiertas necesarias y desconecta las bobinas.","Limpia alrededor de los pozos antes de extraer las bujías.","Retira las bujías una a una e inspecciona su estado.","Compara referencia, longitud y tipo de las nuevas.","Instálalas a mano primero para evitar roscado cruzado.","Aprieta al par indicado por el fabricante y vuelve a montar las bobinas."]},
  {id:6,cat:"Mantenimiento",icon:"💧",title:"Cambio de filtro de habitáculo",desc:"Mejora la calidad del aire interior y el rendimiento del sistema de climatización.",difficulty:"Fácil",time:"15–40 min",cost:"12–40 €",tools:["Destornillador/Torx según modelo"],parts:["Filtro de habitáculo o carbón activo compatible"],warnings:["Respeta la dirección de flujo indicada en el filtro."],steps:["Localiza el alojamiento del filtro, normalmente tras la guantera o en la zona del cortafuegos.","Retira las tapas o fijaciones necesarias.","Extrae el filtro usado observando la flecha de flujo.","Limpia el alojamiento de hojas y residuos.","Introduce el nuevo filtro en la orientación correcta.","Monta de nuevo todas las tapas y fijaciones."]},
  {id:7,cat:"Frenos",icon:"🧪",title:"Revisión del líquido de frenos",desc:"Comprobación visual del nivel y estado del líquido con atención a intervalos de sustitución.",difficulty:"Fácil",time:"10–20 min",cost:"0–20 €",tools:["Linterna","Guantes"],parts:["Líquido de frenos de especificación correcta si procede"],warnings:["El líquido de frenos puede dañar la pintura.","No mezcles especificaciones incompatibles."],steps:["Localiza el depósito del líquido de frenos.","Comprueba el nivel entre las marcas MIN y MAX.","Observa color y contaminación visible.","Si el nivel es bajo, revisa antes el desgaste de pastillas y posibles fugas.","Consulta el intervalo de sustitución recomendado para el vehículo."]},
  {id:8,cat:"Electricidad",icon:"💡",title:"Diagnosis de fallo de iluminación",desc:"Ruta básica para identificar una lámpara, fusible, conexión o módulo relacionado con la iluminación.",difficulty:"Media",time:"20–90 min",cost:"5–80 €",tools:["Multímetro","Extractor de fusibles","Herramientas básicas"],parts:["Lámpara o fusible según diagnóstico"],warnings:["Sustituye fusibles solo por el mismo amperaje.","En faros xenón puede existir alta tensión."],steps:["Identifica qué función de iluminación falla y si es unilateral o general.","Comprueba visualmente la lámpara cuando sea accesible.","Consulta y verifica el fusible correspondiente.","Mide alimentación y masa en el conector si tienes conocimientos para hacerlo.","Si hay alimentación correcta y la lámpara está bien, considera módulo, cableado o unidad de control."]}
@@ -974,6 +990,7 @@ function fillPowers(){
  const powers=unique(vars.flatMap(v=>v.powers||[])).sort((a,b)=>a-b);
  power.innerHTML='<option value="">Cualquier potencia</option>'+powers.map(cv=>`<option value="${cv}">${cv} CV (${Math.round(cv*0.7355)} kW)</option>`).join('');
  updateVehicleSummary();
+ if(typeof updateVehicleVideos==='function') updateVehicleVideos();
 }
 function updateVehicleSummary(){
  const parts=[brand.value,model.value,generation.value,year.value,fuel.value,engine.value,power.value?`${power.value} CV`:null].filter(Boolean);
@@ -986,7 +1003,7 @@ generation.addEventListener('change',fillYears);
 year.addEventListener('change',fillFuels);
 fuel.addEventListener('change',fillEngines);
 engine.addEventListener('change',fillPowers);
-power.addEventListener('change',updateVehicleSummary);
+power.addEventListener('change',()=>{updateVehicleSummary();updateVehicleVideos();});
 
 
 let category="all";
@@ -1000,13 +1017,41 @@ function renderRepairs(){
  const filtered=repairs.filter(r=>(category==="all"||r.cat===category)&&(!q||(r.title+" "+r.desc+" "+r.cat).toLowerCase().includes(q)));
  $("repairList").innerHTML=filtered.length?filtered.map(r=>`<article class="repair"><div class="icon">${r.icon}</div><h3>${r.title}</h3><p>${r.desc}</p><div class="tags"><span class="tag">${r.cat}</span><span class="tag difficulty ${r.difficulty==="Fácil"?"easy":r.difficulty==="Media"?"medium":"hard"}">${r.difficulty}</span><span class="tag">⏱ ${r.time}</span></div><div class="card-bottom"><small>Desde ${r.cost}</small><button class="btn ghost small" onclick="openDetail(${r.id})">Ver guía →</button></div></article>`).join(""):'<div class="empty">No hay guías que coincidan con esa búsqueda. Prueba con otra palabra.</div>';
 }
+function selectedVehicleText(){
+ const parts=[brand.value,model.value,generation.value,year.value,fuel.value,engine.value,power.value?`${power.value} CV`:null].filter(Boolean);
+ return parts.join(" ");
+}
+function youtubeSearchUrl(repairTitle, mode="tutorial"){
+ const suffix={tutorial:"tutorial paso a paso español",diagnostico:"diagnóstico avería síntomas causas español",montaje:"desmontaje montaje reparación español"}[mode]||"tutorial reparación español";
+ const q=[repairTitle,selectedVehicleText(),suffix].filter(Boolean).join(" ");
+ return `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
+}
+function youtubeButtons(title){
+ return `<div class="yt-search"><a class="btn primary small" href="${youtubeSearchUrl(title,'tutorial')}" target="_blank" rel="noopener">▶ Tutorial exacto ↗</a><a class="btn ghost small" href="${youtubeSearchUrl(title,'diagnostico')}" target="_blank" rel="noopener">🔎 Diagnóstico ↗</a><a class="btn ghost small" href="${youtubeSearchUrl(title,'montaje')}" target="_blank" rel="noopener">🔧 Desmontaje / montaje ↗</a></div>`;
+}
+function updateVehicleVideos(){
+ const summary=document.getElementById('videoVehicleSummary'), links=document.getElementById('vehicleVideoLinks');
+ if(!summary||!links)return;
+ const v=selectedVehicleText();
+ summary.innerHTML=v?`Tutoriales buscados para <b>${esc(v)}</b>. Cuantos más datos selecciones, más precisa será la búsqueda.`:'Selecciona marca, modelo, año y motor para afinar los tutoriales.';
+ const topics=['Cambio de aceite y filtro','Pastillas de freno','Filtro de aire','Bujías','Batería','Correa de distribución'];
+ links.innerHTML=topics.map(t=>`<a class="btn ghost small" href="${youtubeSearchUrl(t,'tutorial')}" target="_blank" rel="noopener">${esc(t)} ↗</a>`).join('');
+}
+function repairVideoHtml(r){
+ const specific=selectedVehicleText();
+ if(r.videoId){
+   return `<div class="detail-video"><div class="video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/${r.videoId}" title="Vídeo: ${esc(r.title)}" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div><div class="detail-video-copy"><h4>🎥 Vídeo explicativo</h4><p>Vídeo general de referencia. ${specific?`Para <b>${esc(specific)}</b>, usa estas búsquedas específicas:`:'Selecciona tu vehículo para afinar automáticamente las búsquedas.'}</p>${youtubeButtons(r.title)}</div></div>`;
+ }
+ return `<div class="box" style="margin-top:14px"><h4>🎥 Vídeos específicos</h4><p style="color:var(--muted);font-size:13px">Búsqueda adaptada a ${specific?`<b>${esc(specific)}</b>`:'tu vehículo'}.</p>${youtubeButtons(r.title)}</div>`;
+}
 function openDetail(id){
  const r=repairs.find(x=>x.id===id); $("detailTitle").textContent=r.title;
  $("detailBody").innerHTML=`<div class="tags" style="margin-top:12px"><span class="tag">${r.cat}</span><span class="tag">${r.difficulty}</span><span class="tag">⏱ ${r.time}</span><span class="tag">💶 ${r.cost}</span></div>
  <div class="detail-grid"><div class="box"><h4>🧰 Herramientas</h4><ul>${r.tools.map(x=>`<li>${x}</li>`).join("")}</ul></div><div class="box"><h4>📦 Piezas / consumibles</h4><ul>${r.parts.map(x=>`<li>${x}</li>`).join("")}</ul></div></div>
  <div class="box" style="margin-top:14px"><h4>⚠️ Seguridad</h4><ul>${r.warnings.map(x=>`<li>${x}</li>`).join("")}</ul></div>
  <div class="box" style="margin-top:14px"><h4>🔧 Procedimiento orientativo</h4><ul class="steps-list">${r.steps.map(x=>`<li>${x}</li>`).join("")}</ul></div>
- <div class="notice" style="margin-top:14px">Antes de realizar la intervención, confirma especificaciones, pares de apriete y procedimiento exacto para tu vehículo y motor.</div>`;
+ ${repairVideoHtml(r)}
+ <div class="notice" style="margin-top:14px">Antes de realizar la intervención, confirma especificaciones, pares de apriete y procedimiento exacto para tu vehículo y motor. Los vídeos son material externo de referencia y pueden no corresponder exactamente a tu variante.</div>`;
  $("detailModal").classList.add("open"); document.body.style.overflow="hidden";
 }
 function closeDetail(){$("detailModal").classList.remove("open");document.body.style.overflow=""}
@@ -1020,7 +1065,7 @@ function lookupObd(){
  el.className="obd-result show";el.innerHTML=`<div class="code">${code}</div><h4>${r.title}</h4><p>${r.desc}</p><p style="margin-top:9px"><b>Posibles causas:</b> ${r.causes}</p><p style="margin-top:7px"><b>Comprobaciones:</b> ${r.checks}</p>`;
 }
 $("obdInput").addEventListener("keydown",e=>{if(e.key==="Enter")lookupObd()});
-initVehicle();renderRepairs();
+initVehicle();renderRepairs();updateVehicleVideos();
 </script>
 </body>
 </html>
