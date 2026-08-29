@@ -878,6 +878,10 @@ const repairs=[
   {
     id:101,
     title:"Pulido y restauración de faros",
+    cat:"Mantenimiento",
+    icon:"✨",
+    desc:"Restaura la transparencia de faros opacos o amarillentos y mejora la iluminación.",
+    cost:"15–45 €",
     category:"Mantenimiento exterior",
     time:"45–90 min",
     difficulty:"Fácil",
@@ -890,6 +894,10 @@ const repairs=[
   {
     id:102,
     title:"Reparar un pinchazo",
+    cat:"Neumáticos",
+    icon:"🛞",
+    desc:"Reparación básica de un pinchazo en la banda de rodadura para recuperar la estanqueidad.",
+    cost:"8–25 €",
     category:"Neumáticos",
     time:"20–45 min",
     difficulty:"Fácil",
@@ -902,6 +910,10 @@ const repairs=[
   {
     id:103,
     title:"Cambiar una rueda",
+    cat:"Neumáticos",
+    icon:"🛞",
+    desc:"Sustituye una rueda de forma segura utilizando el gato y los puntos de apoyo correctos.",
+    cost:"0–20 €",
     category:"Neumáticos",
     time:"15–30 min",
     difficulty:"Muy fácil",
@@ -914,6 +926,10 @@ const repairs=[
   {
     id:104,
     title:"Cambiar escobillas limpiaparabrisas",
+    cat:"Mantenimiento",
+    icon:"🌧️",
+    desc:"Sustituye las escobillas desgastadas para recuperar una limpieza uniforme del parabrisas.",
+    cost:"10–35 €",
     category:"Mantenimiento básico",
     time:"10–20 min",
     difficulty:"Muy fácil",
@@ -926,6 +942,10 @@ const repairs=[
   {
     id:105,
     title:"Cambiar una bombilla exterior",
+    cat:"Electricidad",
+    icon:"💡",
+    desc:"Cambia una bombilla exterior averiada y comprueba el funcionamiento del sistema de iluminación.",
+    cost:"5–30 €",
     category:"Electricidad básica",
     time:"15–40 min",
     difficulty:"Fácil",
@@ -938,6 +958,10 @@ const repairs=[
   {
     id:106,
     title:"Arrancar el coche con pinzas",
+    cat:"Batería",
+    icon:"🔋",
+    desc:"Arranca un vehículo con la batería descargada utilizando pinzas o un arrancador portátil.",
+    cost:"0–25 €",
     category:"Batería",
     time:"10–20 min",
     difficulty:"Muy fácil",
@@ -950,6 +974,10 @@ const repairs=[
   {
     id:107,
     title:"Comprobar e inflar neumáticos",
+    cat:"Neumáticos",
+    icon:"🛞",
+    desc:"Comprueba y ajusta la presión de los neumáticos según las especificaciones del fabricante.",
+    cost:"0–5 €",
     category:"Neumáticos",
     time:"10–15 min",
     difficulty:"Muy fácil",
@@ -962,6 +990,10 @@ const repairs=[
   {
     id:108,
     title:"Cambiar un fusible",
+    cat:"Electricidad",
+    icon:"⚡",
+    desc:"Localiza y sustituye un fusible fundido por otro del mismo amperaje.",
+    cost:"1–5 €",
     category:"Electricidad básica",
     time:"10–25 min",
     difficulty:"Muy fácil",
@@ -1172,8 +1204,20 @@ $("repairSearch").addEventListener("input",renderRepairs);
 function applyFilters(){renderRepairs();document.querySelector("#reparaciones").scrollIntoView({behavior:"smooth"})}
 function renderRepairs(){
  const q=$("repairSearch").value.trim().toLowerCase();
- const filtered=repairs.filter(r=>(category==="all"||r.cat===category)&&(!q||(r.title+" "+r.desc+" "+r.cat).toLowerCase().includes(q)));
- $("repairList").innerHTML=filtered.length?filtered.map(r=>`<article class="repair"><div class="icon">${r.icon}</div><h3>${r.title}</h3><p>${r.desc}</p><div class="tags"><span class="tag">${r.cat}</span><span class="tag difficulty ${r.difficulty==="Fácil"?"easy":r.difficulty==="Media"?"medium":"hard"}">${r.difficulty}</span><span class="tag">⏱ ${r.time}</span></div><div class="card-bottom"><small>Desde ${r.cost}</small><button class="btn ghost small" onclick="openDetail(${r.id})">Ver guía →</button></div></article>`).join(""):'<div class="empty">No hay guías que coincidan con esa búsqueda. Prueba con otra palabra.</div>';
+ const filtered=repairs.filter(r=>{
+   const cat=r.cat||r.category||"General";
+   const desc=r.desc||"Guía práctica paso a paso para realizar esta intervención con seguridad.";
+   return (category==="all"||cat===category)&&(!q||(r.title+" "+desc+" "+cat).toLowerCase().includes(q));
+ });
+ $("repairList").innerHTML=filtered.length?filtered.map(r=>{
+   const cat=r.cat||r.category||"General";
+   const icon=r.icon||"🔧";
+   const desc=r.desc||"Guía práctica paso a paso para realizar esta intervención con seguridad.";
+   const cost=r.cost||"consultar";
+   const diff=(r.difficulty||"Orientativa");
+   const diffClass=(diff==="Muy fácil"||diff==="Fácil")?"easy":diff==="Media"?"medium":"hard";
+   return `<article class="repair"><div class="icon">${icon}</div><h3>${r.title}</h3><p>${desc}</p><div class="tags"><span class="tag">${cat}</span><span class="tag difficulty ${diffClass}">${diff}</span><span class="tag">⏱ ${r.time||"Tiempo variable"}</span></div><div class="card-bottom"><small>${cost==="consultar"?"Coste: consultar":"Desde "+cost}</small><button class="btn ghost small" onclick="openDetail(${r.id})">Ver guía →</button></div></article>`;
+ }).join(""):'<div class="empty">No hay guías que coincidan con esa búsqueda. Prueba con otra palabra.</div>';
 }
 function selectedVehicleText(){
  const parts=[brand.value,model.value,generation.value,year.value,fuel.value,engine.value,power.value?`${power.value} CV`:null].filter(Boolean);
@@ -1203,8 +1247,10 @@ function repairVideoHtml(r){
  return `<div class="box" style="margin-top:14px"><h4>🎥 Vídeos específicos</h4><p style="color:var(--muted);font-size:13px">Búsqueda adaptada a ${specific?`<b>${esc(specific)}</b>`:'tu vehículo'}.</p>${youtubeButtons(r.title)}</div>`;
 }
 function openDetail(id){
- const r=repairs.find(x=>x.id===id); $("detailTitle").textContent=r.title;
- $("detailBody").innerHTML=`<div class="tags" style="margin-top:12px"><span class="tag">${r.cat}</span><span class="tag">${r.difficulty}</span><span class="tag">⏱ ${r.time}</span><span class="tag">💶 ${r.cost}</span></div>
+ const r=repairs.find(x=>x.id===id); if(!r)return; $("detailTitle").textContent=r.title;
+ const detailCat=r.cat||r.category||"General";
+ const detailCost=r.cost||"Consultar";
+ $("detailBody").innerHTML=`<div class="tags" style="margin-top:12px"><span class="tag">${detailCat}</span><span class="tag">${r.difficulty||"Orientativa"}</span><span class="tag">⏱ ${r.time||"Tiempo variable"}</span><span class="tag">💶 ${detailCost}</span></div>
  <div class="detail-grid"><div class="box"><h4>🧰 Herramientas</h4><ul>${r.tools.map(x=>`<li>${x}</li>`).join("")}</ul></div><div class="box"><h4>📦 Piezas / consumibles</h4><ul>${r.parts.map(x=>`<li>${x}</li>`).join("")}</ul></div></div>
  <div class="box" style="margin-top:14px"><h4>⚠️ Seguridad</h4><ul>${r.warnings.map(x=>`<li>${x}</li>`).join("")}</ul></div>
  <div class="box" style="margin-top:14px"><h4>🔧 Procedimiento orientativo</h4><ul class="steps-list">${r.steps.map(x=>`<li>${x}</li>`).join("")}</ul></div>
@@ -1219,7 +1265,7 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDetail()});
 function lookupObd(){
  const code=$("obdInput").value.trim().toUpperCase(); const r=obd[code]; const el=$("obdResult");
  if(!code){el.className="obd-result show";el.innerHTML="<p>Introduce un código OBD‑II.</p>";return}
- if(!r){el.className="obd-result show";el.innerHTML=`<div class="code">${code}</div><h4>Código no incluido todavía</h4><p>La base demostrativa contiene P0420, P0301, P0171, P0101 y P0401. La versión completa podrá ampliar estos códigos desde backend.</p>`;return}
+ if(!r){el.className="obd-result show";el.innerHTML=`<div class="code">${code}</div><h4>Código no incluido todavía</h4><p>La base demostrativa contiene P0420, P0301, P0171, P0101 y P0401. La versión completa podrá ampliar esta biblioteca desde backend.</p>`;return}
  el.className="obd-result show";el.innerHTML=`<div class="code">${code}</div><h4>${r.title}</h4><p>${r.desc}</p><p style="margin-top:9px"><b>Posibles causas:</b> ${r.causes}</p><p style="margin-top:7px"><b>Comprobaciones:</b> ${r.checks}</p>`;
 }
 $("obdInput").addEventListener("keydown",e=>{if(e.key==="Enter")lookupObd()});
