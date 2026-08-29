@@ -1,0 +1,56 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MotorFix Admin</title><link rel="stylesheet" href="/static/styles.css"></head><body>
+<header><div class="wrap nav"><div class="brand">Motor<span>Fix</span> Admin</div><div class="links"><a href="/">Web</a><a href="/legal">Legal</a></div></div></header>
+<main class="adminWrap">
+<div class="panel formCard"><div class="kicker">Acceso</div><h2>Panel de administración</h2><label>Clave</label><input id="key" type="password" placeholder="MOTORFIX_ADMIN_KEY"><button style="margin-top:10px" onclick="refreshAll()">Conectar</button><p id="status" class="muted">Introduce la clave de administración.</p></div>
+
+<div id="dashboard" class="stats"></div>
+
+<div class="panel formCard"><div class="kicker">Vehículos</div><h2>Añadir vehículo</h2>
+<div class="row2"><div><label>Marca</label><input id="vbrand"></div><div><label>Modelo</label><input id="vmodel"></div></div>
+<div class="row2"><div><label>Año desde</label><input id="vyf" type="number"></div><div><label>Año hasta</label><input id="vyt" type="number"></div></div>
+<label>Motores (uno por línea)</label><textarea id="vengines"></textarea><button onclick="saveVehicle()">Guardar vehículo</button><div id="vehicleList" class="adminList"></div></div>
+
+<div class="panel formCard"><div class="kicker">Reparaciones</div><h2>Añadir / actualizar guía</h2>
+<div class="row2"><div><label>Slug</label><input id="slug"></div><div><label>Título</label><input id="title"></div></div>
+<div class="row2"><div><label>Categoría</label><input id="category"></div><div><label>Dificultad</label><input id="difficulty" type="number" min="1" max="5" value="2"></div></div>
+<div class="row2"><div><label>Tiempo</label><input id="time_estimate"></div><div><label>Coste</label><input id="cost_estimate"></div></div>
+<label>Aplicación</label><input id="applies"><label>Piezas (una por línea)</label><textarea id="parts"></textarea><label>Herramientas</label><textarea id="tools"></textarea>
+<label>Pasos</label><textarea id="steps"></textarea><label>Advertencias</label><textarea id="warnings"></textarea><label>URL vídeo</label><input id="video_url">
+<label><input id="verified" type="checkbox" style="width:auto"> Información verificada</label>
+<div class="row2"><button onclick="saveRepair()">Guardar nueva</button><button class="secondary" onclick="updateRepair()">Actualizar por slug</button></div><div id="repairList" class="adminList"></div></div>
+
+<div class="panel formCard"><div class="kicker">OBD-II</div><h2>Añadir / actualizar código</h2>
+<div class="row2"><div><label>Código</label><input id="ocode"></div><div><label>Fabricante</label><input id="oman" value="Generic"></div></div>
+<label>Título</label><input id="otitle"><div class="row2"><div><label>Severidad</label><input id="oseverity" value="Media"></div><div><label>Sistema</label><input id="osystem"></div></div>
+<label>Causas</label><textarea id="ocauses"></textarea><label>Comprobaciones</label><textarea id="ochecks"></textarea><label>Consejo de circulación</label><textarea id="odrive"></textarea>
+<button onclick="saveObd()">Guardar código</button><div id="obdList" class="adminList"></div></div>
+
+<div class="panel formCard"><div class="kicker">Compatibilidad</div><h2>Relacionar guía con vehículo</h2>
+<div class="row2"><div><label>Slug reparación</label><input id="cslug"></div><div><label>ID vehículo</label><input id="cvehicle" type="number"></div></div>
+<label>Motor (vacío = todos)</label><input id="cengine"><label>Notas</label><input id="cnotes"><button onclick="saveCompatibility()">Guardar compatibilidad</button><p class="muted">Las reparaciones sin relaciones se consideran genéricas/multimarca.</p></div>
+
+<div class="panel formCard"><div class="kicker">Importación</div><h2>Especificaciones técnicas CSV</h2>
+<p class="muted">Columnas: vehicle_id, engine, spec_key, spec_value, unit, source_name, source_url, verified.</p><input id="csv" type="file" accept=".csv"><button style="margin-top:12px" onclick="uploadCSV()">Importar CSV</button><p id="csvmsg"></p>
+<button class="secondary" onclick="exportDb()">Exportar base JSON</button></div>
+</main>
+<script>
+const val=id=>document.getElementById(id).value.trim();
+const arr=id=>document.getElementById(id).value.split('\n').map(x=>x.trim()).filter(Boolean);
+const headers=()=>({'Content-Type':'application/json','X-Admin-Key':key.value});
+async function api(url,opt={}){opt.headers={...(opt.headers||{}),'X-Admin-Key':key.value};const r=await fetch(url,opt);if(!r.ok)throw new Error(await r.text());return r.status===204?null:r.json()}
+async function refreshAll(){try{const d=await api('/api/admin/dashboard');status.textContent='Conectado';status.className='ok';dashboard.innerHTML=`<div class="stat"><b>${d.vehicles}</b><small>vehículos</small></div><div class="stat"><b>${d.repairs}</b><small>reparaciones</small></div><div class="stat"><b>${d.obd_codes}</b><small>OBD</small></div>`;await Promise.all([loadVehicles(),loadRepairs(),loadObd()])}catch(e){status.textContent=e.message;status.className='err'}}
+async function loadVehicles(){const x=await fetch('/api/vehicles').then(r=>r.json());vehicleList.innerHTML=x.map(v=>`<div class="adminRow"><span>#${v.id} · ${v.brand} ${v.model} · ${v.year_from}-${v.year_to}<br><small>${(v.engines||[]).join(', ')}</small></span><button onclick="delVehicle(${v.id})">Eliminar</button></div>`).join('')}
+async function saveVehicle(){try{await api('/api/admin/vehicles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({brand:val('vbrand'),model:val('vmodel'),year_from:Number(val('vyf')),year_to:Number(val('vyt')),engines:arr('vengines')})});await refreshAll()}catch(e){alert(e.message)}}
+async function delVehicle(id){if(!confirm('¿Eliminar vehículo y datos relacionados?'))return;await api('/api/admin/vehicles/'+id,{method:'DELETE'});refreshAll()}
+function repairBody(){return {slug:val('slug'),title:val('title'),category:val('category'),difficulty:Number(val('difficulty')||2),time_estimate:val('time_estimate'),cost_estimate:val('cost_estimate'),applies:val('applies'),parts:arr('parts'),tools:arr('tools'),steps:arr('steps'),warnings:arr('warnings'),video_url:val('video_url'),is_verified:verified.checked}}
+async function saveRepair(){try{await api('/api/admin/repairs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(repairBody())});await refreshAll()}catch(e){alert(e.message)}}
+async function updateRepair(){try{const old=val('slug');await api('/api/admin/repairs/'+encodeURIComponent(old),{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(repairBody())});await refreshAll()}catch(e){alert(e.message)}}
+async function loadRepairs(){const x=await fetch('/api/repairs').then(r=>r.json());repairList.innerHTML=x.map(r=>`<div class="adminRow"><span>${r.title}<br><small>${r.slug} · ${r.category}</small></span><button onclick="delRepair('${r.slug}')">Eliminar</button></div>`).join('')}
+async function delRepair(slug){if(!confirm('¿Eliminar guía?'))return;await api('/api/admin/repairs/'+encodeURIComponent(slug),{method:'DELETE'});refreshAll()}
+async function saveObd(){try{await api('/api/admin/obd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:val('ocode'),manufacturer:val('oman')||'Generic',title:val('otitle'),severity:val('oseverity'),system:val('osystem'),causes:arr('ocauses'),checks:arr('ochecks'),driving_advice:val('odrive')})});await refreshAll()}catch(e){alert(e.message)}}
+async function loadObd(){const x=await fetch('/api/obd').then(r=>r.json());obdList.innerHTML=x.map(o=>`<div class="adminRow"><span>${o.code} · ${o.title}<br><small>${o.manufacturer} · ${o.severity}</small></span><button onclick="delObd('${o.code}','${o.manufacturer}')">Eliminar</button></div>`).join('')}
+async function delObd(code,man){if(!confirm('¿Eliminar código?'))return;await api('/api/admin/obd/'+encodeURIComponent(code)+'?manufacturer='+encodeURIComponent(man),{method:'DELETE'});refreshAll()}
+async function saveCompatibility(){try{await api('/api/admin/compatibility',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({repair_slug:val('cslug'),vehicle_id:Number(val('cvehicle')),engine:val('cengine'),notes:val('cnotes')})});alert('Compatibilidad guardada')}catch(e){alert(e.message)}}
+async function uploadCSV(){if(!csv.files[0])return;const f=new FormData();f.append('file',csv.files[0]);try{const x=await api('/api/admin/import/specs-csv',{method:'POST',body:f});csvmsg.textContent=`Importadas: ${x.imported}`;csvmsg.className='ok'}catch(e){csvmsg.textContent=e.message;csvmsg.className='err'}}
+async function exportDb(){try{const x=await api('/api/admin/export');const blob=new Blob([JSON.stringify(x,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='motorfix-export.json';a.click()}catch(e){alert(e.message)}}
+</script></body></html>

@@ -1,0 +1,44 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MotorFix Pro</title><meta name="description" content="Guías de reparación, diagnosis OBD-II y datos técnicos de vehículos.">
+<link rel="stylesheet" href="/static/styles.css"></head><body>
+<header><div class="wrap nav"><div class="brand">Motor<span>Fix</span> Pro</div><div class="links"><a href="#repairs">Reparaciones</a><a href="#obd">OBD-II</a><a href="/legal">Legal</a><a href="/admin">Admin</a></div></div></header>
+<main>
+<section class="hero"><div class="wrap grid2"><div class="panel heroCopy"><div class="kicker">Plataforma de reparación y diagnosis</div><h1>Repara con datos, no con suposiciones.</h1>
+<p class="muted">Selecciona el vehículo, busca una reparación y consulta códigos OBD-II. MotorFix utiliza su propia base de datos. Las especificaciones críticas se publicarán únicamente cuando estén verificadas con fuentes autorizadas.</p>
+<div id="providerBadge" class="notice" style="margin-top:14px">Comprobando proveedor técnico…</div>
+<div class="stats"><div class="stat"><b id="sRep">—</b><small>reparaciones</small></div><div class="stat"><b id="sVeh">—</b><small>vehículos</small></div><div class="stat"><b id="sObd">—</b><small>códigos OBD</small></div></div></div>
+<div class="panel search"><div class="row2"><div><label>Marca</label><select id="brand"><option value="">Todas</option></select></div><div><label>Modelo</label><select id="model"><option value="">Todos</option></select></div></div>
+<div class="row2"><div><label>Año</label><input id="year" inputmode="numeric" placeholder="2018"></div><div><label>Motor</label><select id="engine"><option value="">Todos</option></select></div></div>
+<label>Buscar reparación</label><input id="q" placeholder="Ej. frenos, aceite, batería"><button onclick="loadRepairs()">Buscar</button><button class="secondary" onclick="resetAll()">Restablecer</button></div></div></section>
+<section id="repairs" class="section"><div class="wrap"><h2>Reparaciones</h2><p class="muted">El filtro de vehículo ya está conectado a la compatibilidad de cada guía. Las guías genéricas aparecen para cualquier vehículo.</p><div id="cards" class="cards"></div><div id="detail" class="panel detail hidden"></div></div></section>
+<section id="obd" class="section"><div class="wrap"><h2>Buscador OBD-II</h2><div class="grid2"><div class="panel search"><label>Código</label><input id="obdCode" maxlength="7" placeholder="P0420"><button onclick="searchObd()">Consultar</button><p class="muted">Los códigos orientan el diagnóstico; no identifican siempre una pieza averiada.</p></div><div id="obdResult" class="panel detail"><div class="notice">Introduce un código OBD-II.</div></div></div></div></section>
+</main>
+<footer><div class="wrap">MotorFix Pro · Uso educativo y orientativo · <a href="/legal">Aviso legal y privacidad</a></div></footer>
+<script>
+let vehicles=[];
+async function init(){
+ const [ps,st]=await Promise.all([fetch('/api/provider/status').then(r=>r.json()),fetch('/api/stats').then(r=>r.json())]);
+ providerBadge.innerHTML=`<strong>Proveedor técnico:</strong> ${ps.active==='local'?'Base MotorFix local':ps.active}`;
+ vehicles=await fetch('/api/vehicles').then(r=>r.json());
+ brand.innerHTML='<option value="">Todas</option>'+[...new Set(vehicles.map(v=>v.brand))].sort().map(x=>`<option>${x}</option>`).join('');
+ brand.onchange=syncModels; model.onchange=syncEngines; year.oninput=loadRepairs; engine.onchange=loadRepairs;
+ sVeh.textContent=st.vehicles; sObd.textContent=st.obd_codes; await loadRepairs();
+}
+function syncModels(){const b=brand.value;const list=vehicles.filter(v=>!b||v.brand===b);model.innerHTML='<option value="">Todos</option>'+[...new Set(list.map(v=>v.model))].map(x=>`<option>${x}</option>`).join('');syncEngines();loadRepairs()}
+function syncEngines(){const b=brand.value,m=model.value;const list=vehicles.filter(v=>(!b||v.brand===b)&&(!m||v.model===m));engine.innerHTML='<option value="">Todos</option>'+[...new Set(list.flatMap(v=>v.engines||[]))].map(x=>`<option>${x}</option>`).join('');loadRepairs()}
+async function loadRepairs(){const qs=new URLSearchParams(); if(q.value)qs.set('q',q.value); if(brand.value)qs.set('brand',brand.value); if(model.value)qs.set('model',model.value); if(year.value)qs.set('year',year.value); if(engine.value)qs.set('engine',engine.value);
+ const list=await fetch('/api/repairs?'+qs).then(r=>r.json()); sRep.textContent=list.length;
+ cards.innerHTML=list.length?list.map(r=>`<article class="card"><div class="kicker">${r.category}</div><h3>${r.title}</h3><div class="meta"><span>⏱ ${r.time_estimate}</span><span>📊 ${r.difficulty}/5</span><span>💶 ${r.cost_estimate}</span>${r.is_verified?'<span>✓ verificada</span>':''}</div><p class="muted">${r.applies}</p><button onclick="openRepair('${r.slug}')">Ver guía</button></article>`).join(''):'<div class="notice">No hay guías compatibles con estos filtros todavía.</div>'}
+async function openRepair(slug){const res=await fetch('/api/repairs/'+slug);if(!res.ok)return;const r=await res.json();
+ detail.innerHTML=`<div class="kicker">${r.category}</div><h2>${r.title}</h2><div class="meta"><span>⏱ ${r.time_estimate}</span><span>📊 ${r.difficulty}/5</span><span>💶 ${r.cost_estimate}</span></div>
+ <div class="columns"><div class="box"><h4>Piezas</h4><ul>${r.parts.map(x=>`<li>${x}</li>`).join('')}</ul></div><div class="box"><h4>Herramientas</h4><ul>${r.tools.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>
+ <div class="box" style="margin-top:14px"><h4>Pasos</h4><ol>${r.steps.map(x=>`<li>${x}</li>`).join('')}</ol></div>
+ <div class="notice" style="margin-top:14px"><strong>Seguridad</strong><br>${r.warnings.join('<br>')}</div>
+ ${r.compatibility.length?`<div class="box" style="margin-top:14px"><h4>Compatibilidad cargada</h4><ul>${r.compatibility.map(x=>`<li>${x.brand} ${x.model} ${x.year_from}-${x.year_to}${x.engine?' · '+x.engine:''}</li>`).join('')}</ul></div>`:''}
+ ${r.video_url?`<div class="videoLink"><a target="_blank" rel="noopener" href="${r.video_url}"><button>Ver vídeo relacionado</button></a></div>`:''}`;
+ detail.classList.remove('hidden');detail.scrollIntoView({behavior:'smooth'})}
+async function searchObd(){const c=obdCode.value.trim().toUpperCase();if(!c)return;const res=await fetch('/api/obd/'+encodeURIComponent(c));if(!res.ok){obdResult.innerHTML='<div class="notice">Código no incluido todavía.</div>';return}const x=await res.json();
+ obdResult.innerHTML=`<div class="kicker">${x.system}</div><h2>${x.code} · ${x.title}</h2><span class="sev">${x.severity}</span><div class="columns"><div class="box"><h4>Causas posibles</h4><ul>${x.causes.map(v=>`<li>${v}</li>`).join('')}</ul></div><div class="box"><h4>Pruebas</h4><ul>${x.checks.map(v=>`<li>${v}</li>`).join('')}</ul></div></div><div class="notice" style="margin-top:14px"><strong>Circulación:</strong> ${x.driving_advice}</div>`}
+function resetAll(){brand.value='';model.innerHTML='<option value="">Todos</option>';engine.innerHTML='<option value="">Todos</option>';year.value='';q.value='';loadRepairs()}
+obdCode.addEventListener('keydown',e=>{if(e.key==='Enter')searchObd()});q.addEventListener('keydown',e=>{if(e.key==='Enter')loadRepairs()});init();
+</script></body></html>

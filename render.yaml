@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: motorfix-pro
+    runtime: docker
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: MOTORFIX_PROVIDER
+        value: local
+      - key: MOTORFIX_DB_PATH
+        value: /var/data/motorfix.db
+      - key: MOTORFIX_ADMIN_KEY
+        generateValue: true
+    disk:
+      name: motorfix-data
+      mountPath: /var/data
+      sizeGB: 1
