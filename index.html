@@ -260,14 +260,14 @@ footer{padding-top:26px;padding-bottom:26px}
     <h2 id="guias-seo">Reparación y diagnóstico del coche</h2>
     <p class="seo-copy">Accede directamente a guías de mantenimiento, frenos, batería, filtros y códigos de avería OBD-II. Estas páginas están preparadas para que los buscadores puedan indexar cada tema de forma independiente.</p>
     <div class="seo-linkgrid">
-      <a class="seo-link" href="/reparaciones/cambio-aceite-filtro.html"><b>Cambio de aceite y filtro</b><span>Pasos, herramientas y precauciones.</span></a>
-      <a class="seo-link" href="/reparaciones/cambiar-pastillas-freno.html"><b>Cambiar pastillas de freno</b><span>Guía orientativa de sustitución.</span></a>
-      <a class="seo-link" href="/reparaciones/cambio-bateria-coche.html"><b>Cambiar batería del coche</b><span>Desconexión, montaje y comprobaciones.</span></a>
-      <a class="seo-link" href="/reparaciones/cambio-filtro-aire.html"><b>Cambiar filtro de aire</b><span>Mantenimiento de la admisión.</span></a>
-      <a class="seo-link" href="/reparaciones/cambiar-bujias.html"><b>Cambiar bujías</b><span>Guía para motores gasolina.</span></a>
-      <a class="seo-link" href="/obd/p0420.html"><b>Código OBD P0420</b><span>Causas y comprobaciones habituales.</span></a>
+      <a class="seo-link" href="/reparaciones/cambio-aceite-filtro.html" data-repair-id="1"><b>Cambio de aceite y filtro</b><span>Pasos, herramientas y precauciones.</span></a>
+      <a class="seo-link" href="/reparaciones/cambiar-pastillas-freno.html" data-repair-id="2"><b>Cambiar pastillas de freno</b><span>Guía orientativa de sustitución.</span></a>
+      <a class="seo-link" href="/reparaciones/cambio-bateria-coche.html" data-repair-id="3"><b>Cambiar batería del coche</b><span>Desconexión, montaje y comprobaciones.</span></a>
+      <a class="seo-link" href="/reparaciones/cambio-filtro-aire.html" data-repair-id="4"><b>Cambiar filtro de aire</b><span>Mantenimiento de la admisión.</span></a>
+      <a class="seo-link" href="/reparaciones/cambiar-bujias.html" data-repair-id="5"><b>Cambiar bujías</b><span>Guía para motores gasolina.</span></a>
+      <a class="seo-link" href="/obd/p0420.html" data-obd-code="P0420"><b>Código OBD P0420</b><span>Causas y comprobaciones habituales.</span></a>
     </div>
-    <p style="margin-top:18px"><a class="btn primary" href="/reparaciones">Ver las 40 guías completas →</a></p>
+    <p style="margin-top:18px"><a class="btn primary" href="#reparaciones">Ver todas las guías disponibles →</a></p>
     <div class="seo-faq">
       <details><summary>¿Cómo busco una reparación para mi coche?</summary><p>Selecciona marca, modelo, año y motor en el buscador y escribe la reparación o componente que necesitas.</p></details>
       <details><summary>¿Qué información ofrecen las guías?</summary><p>Incluyen dificultad, tiempo orientativo, herramientas, piezas, precauciones y una secuencia general de trabajo.</p></details>
@@ -1339,9 +1339,13 @@ function openLinkedContent(){
 }
 document.addEventListener("click",e=>{
  const repairLink=e.target.closest("[data-repair-id]");
- if(repairLink) openDetail(Number(repairLink.dataset.repairId));
+ if(repairLink){
+   e.preventDefault();
+   openDetail(Number(repairLink.dataset.repairId));
+ }
  const obdLink=e.target.closest("[data-obd-code]");
  if(obdLink){
+   e.preventDefault();
    $("obdInput").value=obdLink.dataset.obdCode;
    lookupObd();
    document.querySelector("#buscador").scrollIntoView({behavior:"smooth"});
