@@ -1,44 +1,238 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MotorFix Pro</title><meta name="description" content="Guías de reparación, diagnosis OBD-II y datos técnicos de vehículos.">
-<link rel="stylesheet" href="/static/styles.css"></head><body>
-<header><div class="wrap nav"><div class="brand">Motor<span>Fix</span> Pro</div><div class="links"><a href="#repairs">Reparaciones</a><a href="#obd">OBD-II</a><a href="/legal">Legal</a><a href="/admin">Admin</a></div></div></header>
-<main>
-<section class="hero"><div class="wrap grid2"><div class="panel heroCopy"><div class="kicker">Plataforma de reparación y diagnosis</div><h1>Repara con datos, no con suposiciones.</h1>
-<p class="muted">Selecciona el vehículo, busca una reparación y consulta códigos OBD-II. MotorFix utiliza su propia base de datos. Las especificaciones críticas se publicarán únicamente cuando estén verificadas con fuentes autorizadas.</p>
-<div id="providerBadge" class="notice" style="margin-top:14px">Comprobando proveedor técnico…</div>
-<div class="stats"><div class="stat"><b id="sRep">—</b><small>reparaciones</small></div><div class="stat"><b id="sVeh">—</b><small>vehículos</small></div><div class="stat"><b id="sObd">—</b><small>códigos OBD</small></div></div></div>
-<div class="panel search"><div class="row2"><div><label>Marca</label><select id="brand"><option value="">Todas</option></select></div><div><label>Modelo</label><select id="model"><option value="">Todos</option></select></div></div>
-<div class="row2"><div><label>Año</label><input id="year" inputmode="numeric" placeholder="2018"></div><div><label>Motor</label><select id="engine"><option value="">Todos</option></select></div></div>
-<label>Buscar reparación</label><input id="q" placeholder="Ej. frenos, aceite, batería"><button onclick="loadRepairs()">Buscar</button><button class="secondary" onclick="resetAll()">Restablecer</button></div></div></section>
-<section id="repairs" class="section"><div class="wrap"><h2>Reparaciones</h2><p class="muted">El filtro de vehículo ya está conectado a la compatibilidad de cada guía. Las guías genéricas aparecen para cualquier vehículo.</p><div id="cards" class="cards"></div><div id="detail" class="panel detail hidden"></div></div></section>
-<section id="obd" class="section"><div class="wrap"><h2>Buscador OBD-II</h2><div class="grid2"><div class="panel search"><label>Código</label><input id="obdCode" maxlength="7" placeholder="P0420"><button onclick="searchObd()">Consultar</button><p class="muted">Los códigos orientan el diagnóstico; no identifican siempre una pieza averiada.</p></div><div id="obdResult" class="panel detail"><div class="notice">Introduce un código OBD-II.</div></div></div></div></section>
-</main>
-<footer><div class="wrap">MotorFix Pro · Uso educativo y orientativo · <a href="/legal">Aviso legal y privacidad</a></div></footer>
-<script>
-let vehicles=[];
-async function init(){
- const [ps,st]=await Promise.all([fetch('/api/provider/status').then(r=>r.json()),fetch('/api/stats').then(r=>r.json())]);
- providerBadge.innerHTML=`<strong>Proveedor técnico:</strong> ${ps.active==='local'?'Base MotorFix local':ps.active}`;
- vehicles=await fetch('/api/vehicles').then(r=>r.json());
- brand.innerHTML='<option value="">Todas</option>'+[...new Set(vehicles.map(v=>v.brand))].sort().map(x=>`<option>${x}</option>`).join('');
- brand.onchange=syncModels; model.onchange=syncEngines; year.oninput=loadRepairs; engine.onchange=loadRepairs;
- sVeh.textContent=st.vehicles; sObd.textContent=st.obd_codes; await loadRepairs();
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080b10">
+<title>MotorFix Pro | Diagnóstico y reparación</title>
+<meta name="description" content="Manual interactivo de reparación de vehículos: busca por marca, modelo, motor, reparación o código OBD-II.">
+<style>
+:root{
+  --bg:#080b10;--bg2:#0d1219;--panel:#111821;--panel2:#151f2b;--line:#24303e;
+  --txt:#f6f8fb;--muted:#9ba9ba;--red:#ff3b30;--red2:#ff665e;--green:#2fd07f;
+  --amber:#ffb020;--blue:#59a9ff;--shadow:0 22px 70px rgba(0,0,0,.35);
 }
-function syncModels(){const b=brand.value;const list=vehicles.filter(v=>!b||v.brand===b);model.innerHTML='<option value="">Todos</option>'+[...new Set(list.map(v=>v.model))].map(x=>`<option>${x}</option>`).join('');syncEngines();loadRepairs()}
-function syncEngines(){const b=brand.value,m=model.value;const list=vehicles.filter(v=>(!b||v.brand===b)&&(!m||v.model===m));engine.innerHTML='<option value="">Todos</option>'+[...new Set(list.flatMap(v=>v.engines||[]))].map(x=>`<option>${x}</option>`).join('');loadRepairs()}
-async function loadRepairs(){const qs=new URLSearchParams(); if(q.value)qs.set('q',q.value); if(brand.value)qs.set('brand',brand.value); if(model.value)qs.set('model',model.value); if(year.value)qs.set('year',year.value); if(engine.value)qs.set('engine',engine.value);
- const list=await fetch('/api/repairs?'+qs).then(r=>r.json()); sRep.textContent=list.length;
- cards.innerHTML=list.length?list.map(r=>`<article class="card"><div class="kicker">${r.category}</div><h3>${r.title}</h3><div class="meta"><span>⏱ ${r.time_estimate}</span><span>📊 ${r.difficulty}/5</span><span>💶 ${r.cost_estimate}</span>${r.is_verified?'<span>✓ verificada</span>':''}</div><p class="muted">${r.applies}</p><button onclick="openRepair('${r.slug}')">Ver guía</button></article>`).join(''):'<div class="notice">No hay guías compatibles con estos filtros todavía.</div>'}
-async function openRepair(slug){const res=await fetch('/api/repairs/'+slug);if(!res.ok)return;const r=await res.json();
- detail.innerHTML=`<div class="kicker">${r.category}</div><h2>${r.title}</h2><div class="meta"><span>⏱ ${r.time_estimate}</span><span>📊 ${r.difficulty}/5</span><span>💶 ${r.cost_estimate}</span></div>
- <div class="columns"><div class="box"><h4>Piezas</h4><ul>${r.parts.map(x=>`<li>${x}</li>`).join('')}</ul></div><div class="box"><h4>Herramientas</h4><ul>${r.tools.map(x=>`<li>${x}</li>`).join('')}</ul></div></div>
- <div class="box" style="margin-top:14px"><h4>Pasos</h4><ol>${r.steps.map(x=>`<li>${x}</li>`).join('')}</ol></div>
- <div class="notice" style="margin-top:14px"><strong>Seguridad</strong><br>${r.warnings.join('<br>')}</div>
- ${r.compatibility.length?`<div class="box" style="margin-top:14px"><h4>Compatibilidad cargada</h4><ul>${r.compatibility.map(x=>`<li>${x.brand} ${x.model} ${x.year_from}-${x.year_to}${x.engine?' · '+x.engine:''}</li>`).join('')}</ul></div>`:''}
- ${r.video_url?`<div class="videoLink"><a target="_blank" rel="noopener" href="${r.video_url}"><button>Ver vídeo relacionado</button></a></div>`:''}`;
- detail.classList.remove('hidden');detail.scrollIntoView({behavior:'smooth'})}
-async function searchObd(){const c=obdCode.value.trim().toUpperCase();if(!c)return;const res=await fetch('/api/obd/'+encodeURIComponent(c));if(!res.ok){obdResult.innerHTML='<div class="notice">Código no incluido todavía.</div>';return}const x=await res.json();
- obdResult.innerHTML=`<div class="kicker">${x.system}</div><h2>${x.code} · ${x.title}</h2><span class="sev">${x.severity}</span><div class="columns"><div class="box"><h4>Causas posibles</h4><ul>${x.causes.map(v=>`<li>${v}</li>`).join('')}</ul></div><div class="box"><h4>Pruebas</h4><ul>${x.checks.map(v=>`<li>${v}</li>`).join('')}</ul></div></div><div class="notice" style="margin-top:14px"><strong>Circulación:</strong> ${x.driving_advice}</div>`}
-function resetAll(){brand.value='';model.innerHTML='<option value="">Todos</option>';engine.innerHTML='<option value="">Todos</option>';year.value='';q.value='';loadRepairs()}
-obdCode.addEventListener('keydown',e=>{if(e.key==='Enter')searchObd()});q.addEventListener('keydown',e=>{if(e.key==='Enter')loadRepairs()});init();
-</script></body></html>
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:
+radial-gradient(circle at 84% 10%,rgba(255,59,48,.12),transparent 28%),
+radial-gradient(circle at 15% 50%,rgba(89,169,255,.07),transparent 26%),
+var(--bg);color:var(--txt);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.55}
+a{color:inherit;text-decoration:none} button,input,select{font:inherit}.wrap{width:min(1180px,calc(100% - 34px));margin:auto}
+header{position:sticky;top:0;z-index:30;background:rgba(8,11,16,.8);backdrop-filter:blur(18px);border-bottom:1px solid rgba(255,255,255,.06)}
+.nav{height:72px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:950;letter-spacing:-.5px}
+.logo{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,var(--red2),#bd1812);box-shadow:0 12px 30px rgba(255,59,48,.25);font-size:21px}
+.brand span b{color:var(--red2)} .brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;margin-top:-2px}
+.navlinks{display:flex;gap:24px;color:#bec8d4;font-size:14px;font-weight:750}.navlinks a:hover{color:#fff}
+.btn{border:0;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:13px;padding:13px 18px;font-weight:850;transition:.2s}
+.btn:hover{transform:translateY(-1px)}.btn.primary{background:linear-gradient(135deg,var(--red2),var(--red));color:#fff;box-shadow:0 10px 30px rgba(255,59,48,.22)}
+.btn.ghost{background:#121a24;border:1px solid var(--line);color:#e9eef5}.btn.small{padding:10px 13px;border-radius:11px;font-size:13px}
+.hero{padding:82px 0 55px;position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;right:-120px;top:30px;width:500px;height:500px;border-radius:50%;border:1px solid rgba(255,255,255,.04);box-shadow:0 0 0 70px rgba(255,255,255,.015),0 0 0 140px rgba(255,255,255,.01);pointer-events:none}
+.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:44px;align-items:center}
+.kicker{display:inline-flex;align-items:center;gap:9px;color:#ff968f;font-size:12px;text-transform:uppercase;letter-spacing:1.5px;font-weight:900}.kicker:before{content:"";width:9px;height:9px;border-radius:50%;background:var(--red);box-shadow:0 0 0 5px rgba(255,59,48,.12)}
+h1{font-size:clamp(46px,7vw,82px);line-height:.95;letter-spacing:-4px;margin:18px 0 20px;max-width:780px}
+h1 .accent{color:var(--red2)}.lead{font-size:19px;color:#b6c0cd;max-width:690px;margin:0 0 28px}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:28px}
+.metrics{display:flex;gap:10px;flex-wrap:wrap}.metric{background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.07);padding:9px 12px;border-radius:999px;color:#cad3de;font-size:12px;font-weight:750}
+.hero-card{position:relative;background:linear-gradient(160deg,#171f2a,#0f151d 68%);border:1px solid #283445;border-radius:24px;padding:22px;box-shadow:var(--shadow);overflow:hidden}
+.hero-card:before{content:"";position:absolute;inset:-50% auto auto -20%;width:65%;height:100%;background:linear-gradient(110deg,transparent,rgba(255,255,255,.05),transparent);transform:rotate(15deg)}
+.gauge{height:170px;border-radius:20px;background:radial-gradient(circle at 50% 120%,#192331 0 48%,transparent 49%),linear-gradient(180deg,#111821,#0c1118);border:1px solid #253243;position:relative;display:grid;place-items:center;overflow:hidden}
+.gauge-ring{width:210px;height:210px;border-radius:50%;border:16px solid #1b2633;border-top-color:var(--red);border-right-color:#ff8b86;transform:rotate(-45deg);position:absolute;bottom:-100px}
+.gauge-copy{position:relative;text-align:center;margin-top:20px}.gauge-copy strong{display:block;font-size:32px;letter-spacing:-1px}.gauge-copy span{color:var(--muted);font-size:12px}
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.quick div{padding:14px;border-radius:15px;background:#0d141d;border:1px solid #222f3e}.quick b{display:block;font-size:13px}.quick span{font-size:11px;color:var(--muted)}
+.section{padding:72px 0}.section-head{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:24px}.section-head h2{font-size:clamp(30px,4vw,48px);letter-spacing:-2px;margin:7px 0 0}.section-head p{color:var(--muted);max-width:540px;margin:0}
+.toolbox{display:grid;grid-template-columns:1.35fr .65fr;gap:16px}
+.panel{background:linear-gradient(160deg,var(--panel),#0d141c);border:1px solid var(--line);border-radius:22px;padding:22px;box-shadow:0 16px 45px rgba(0,0,0,.18)}
+.panel h3{margin:0 0 16px;font-size:20px}.formgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+label{display:block;color:#9fadbd;font-size:11px;font-weight:850;text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
+input,select{width:100%;background:#0a1017;color:#eef3f8;border:1px solid #2a3747;border-radius:12px;padding:13px 14px;outline:none}
+input:focus,select:focus{border-color:#ff6d65;box-shadow:0 0 0 3px rgba(255,59,48,.1)}
+.searchline{display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:12px}
+.obd-row{display:grid;grid-template-columns:1fr auto;gap:9px}.obd-hint{margin-top:12px;color:var(--muted);font-size:12px}
+.features{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}.feature{padding:16px;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.02)}.feature i{font-style:normal;font-size:21px}.feature b{display:block;margin-top:6px;font-size:13px}.feature span{font-size:11px;color:var(--muted)}
+.filterbar{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px}.chip{border:1px solid #293545;background:#111821;color:#b9c5d2;border-radius:999px;padding:9px 12px;font-size:12px;font-weight:800;cursor:pointer}.chip.active,.chip:hover{border-color:#ff625a;color:#fff;background:rgba(255,59,48,.11)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.repair{background:linear-gradient(160deg,#121a24,#0c121a);border:1px solid var(--line);border-radius:20px;padding:19px;position:relative;overflow:hidden;transition:.22s}.repair:hover{transform:translateY(-3px);border-color:#3b4c60}.repair .icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:#1b2633;font-size:22px;margin-bottom:16px}.repair h3{font-size:19px;margin:0 0 7px}.repair p{color:var(--muted);font-size:13px;margin:0 0 16px;min-height:40px}.tags{display:flex;gap:7px;flex-wrap:wrap}.tag{font-size:10px;font-weight:850;padding:6px 8px;border-radius:999px;background:#0c1118;border:1px solid #283545;color:#b8c5d3}.difficulty.easy{color:#7ee7b6}.difficulty.medium{color:#ffd075}.difficulty.hard{color:#ff908a}.card-bottom{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:18px}.card-bottom small{color:#8493a5}
+.empty{grid-column:1/-1;padding:28px;text-align:center;color:var(--muted);border:1px dashed #334155;border-radius:18px}
+.obd-result{margin-top:14px;padding:16px;border-radius:15px;border:1px solid #2b3949;background:#0b1219;display:none}.obd-result.show{display:block}.obd-result .code{font-size:28px;font-weight:950;color:#ff7c74}.obd-result h4{margin:4px 0 8px}.obd-result p{margin:0;color:#b9c4d1;font-size:13px}
+.band{background:linear-gradient(90deg,rgba(255,59,48,.08),rgba(89,169,255,.05));border-top:1px solid rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.05)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.step{padding:20px;border-radius:18px;background:#0e151e;border:1px solid var(--line)}.step .n{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--red);font-weight:950}.step h3{margin:14px 0 7px}.step p{margin:0;color:var(--muted);font-size:13px}
+.contact{display:grid;grid-template-columns:1fr .9fr;gap:18px}.contact-card h2{font-size:40px;letter-spacing:-1.8px;margin:8px 0}.contact-card p{color:var(--muted)}.contact-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.notice{padding:15px;border:1px solid #59431d;background:rgba(255,176,32,.08);border-radius:14px;color:#e8cb91;font-size:12px}
+footer{padding:30px 0 42px;color:#7f8c9b;border-top:1px solid rgba(255,255,255,.06);font-size:12px}.foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.modal{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);display:none;padding:18px;overflow:auto}.modal.open{display:block}.sheet{max-width:880px;margin:20px auto;background:#101821;border:1px solid #2c3948;border-radius:24px;padding:22px;box-shadow:var(--shadow)}.sheet-top{display:flex;justify-content:space-between;gap:15px;align-items:start}.close{background:#1b2633;border:1px solid #334154;color:white;border-radius:11px;padding:9px 12px;cursor:pointer}.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}.box{background:#0b1118;border:1px solid #253140;border-radius:15px;padding:15px}.box h4{margin:0 0 8px}.box ul{margin:0;padding-left:18px;color:#bac5d2}.box li{margin:7px 0}.steps-list{counter-reset:step;list-style:none!important;padding:0!important}.steps-list li{display:flex;gap:10px}.steps-list li:before{counter-increment:step;content:counter(step);flex:0 0 28px;height:28px;display:grid;place-items:center;border-radius:50%;background:var(--red);color:#fff;font-weight:900;font-size:12px}
+@media(max-width:900px){.navlinks{display:none}.hero-grid,.toolbox,.contact{grid-template-columns:1fr}.hero{padding-top:52px}.hero-card{max-width:620px}.formgrid{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr 1fr}.features{grid-template-columns:1fr 1fr}.steps{grid-template-columns:1fr}.detail-grid{grid-template-columns:1fr}}
+@media(max-width:560px){.wrap{width:min(100% - 22px,1180px)}.nav{height:64px}.brand small{display:none}.btn.small.navcta{display:none}h1{font-size:48px;letter-spacing:-2.8px}.lead{font-size:16px}.hero{padding-top:38px}.formgrid,.cards,.features{grid-template-columns:1fr}.searchline,.obd-row{grid-template-columns:1fr}.section{padding:52px 0}.section-head{display:block}.section-head p{margin-top:12px}.quick{grid-template-columns:1fr}.contact-card h2{font-size:32px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="#inicio"><span class="logo">🔧</span><span>Motor<b>Fix</b> Pro<small>Reparación & diagnóstico</small></span></a>
+    <nav class="navlinks"><a href="#buscador">Buscador</a><a href="#reparaciones">Reparaciones</a><a href="#como-funciona">Cómo funciona</a><a href="#contacto">Contacto</a></nav>
+    <a class="btn primary small navcta" href="#buscador">Empezar diagnóstico</a>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="inicio">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="kicker">Manual interactivo del automóvil</div>
+      <h1>Diagnostica.<br><span class="accent">Repara. Aprende.</span></h1>
+      <p class="lead">Selecciona tu vehículo, encuentra la reparación que necesitas y consulta códigos OBD‑II con síntomas, causas y comprobaciones orientativas.</p>
+      <div class="hero-actions"><a class="btn primary" href="#buscador">Buscar reparación</a><a class="btn ghost" href="#reparaciones">Explorar guías</a></div>
+      <div class="metrics"><span class="metric">🔧 Guías paso a paso</span><span class="metric">🧠 OBD‑II</span><span class="metric">⏱ Tiempo estimado</span><span class="metric">💶 Coste orientativo</span></div>
+    </div>
+    <div class="hero-card">
+      <div class="gauge"><div class="gauge-ring"></div><div class="gauge-copy"><span>Sistema</span><strong>MotorFix</strong><span>Diagnóstico guiado</span></div></div>
+      <div class="quick"><div><b>Vehículo compatible</b><span>Marca · modelo · año · motor</span></div><div><b>Ficha técnica</b><span>Herramientas · piezas · pasos</span></div><div><b>Código OBD</b><span>Síntomas · causas · comprobaciones</span></div><div><b>Proveedor técnico</b><span>Preparado para integración futura</span></div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="buscador">
+<div class="wrap">
+  <div class="section-head"><div><div class="kicker">Centro de diagnóstico</div><h2>Encuentra lo que necesitas</h2></div><p>La búsqueda combina vehículo, reparación y diagnóstico OBD para darte una ruta clara antes de empezar.</p></div>
+  <div class="toolbox">
+    <div class="panel">
+      <h3>🔎 Buscar reparación por vehículo</h3>
+      <div class="formgrid">
+        <div><label>Marca</label><select id="brand"></select></div>
+        <div><label>Modelo</label><select id="model"></select></div>
+        <div><label>Año</label><select id="year"></select></div>
+        <div><label>Motor</label><select id="engine"></select></div>
+      </div>
+      <div class="searchline"><input id="repairSearch" placeholder="Ej. pastillas de freno, aceite, batería…"><button class="btn primary" onclick="applyFilters()">Buscar</button></div>
+      <div class="features"><div class="feature"><i>🧰</i><b>Herramientas</b><span>Qué necesitas antes de empezar</span></div><div class="feature"><i>📊</i><b>Dificultad</b><span>Fácil, media o avanzada</span></div><div class="feature"><i>⏱</i><b>Tiempo</b><span>Duración estimada del trabajo</span></div><div class="feature"><i>⚠️</i><b>Seguridad</b><span>Advertencias importantes</span></div></div>
+    </div>
+    <div class="panel">
+      <h3>🧠 Código OBD‑II</h3>
+      <div class="obd-row"><input id="obdInput" maxlength="5" placeholder="Ej. P0420"><button class="btn primary" onclick="lookupObd()">Consultar</button></div>
+      <div class="obd-hint">Prueba con P0420, P0301, P0171, P0101 o P0401.</div>
+      <div id="obdResult" class="obd-result"></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section class="section" id="reparaciones">
+<div class="wrap">
+  <div class="section-head"><div><div class="kicker">Biblioteca</div><h2>Reparaciones populares</h2></div><p>Guías prácticas con dificultad, tiempo, herramientas y pasos orientativos.</p></div>
+  <div class="filterbar"><button class="chip active" data-filter="all">Todas</button><button class="chip" data-filter="Mantenimiento">Mantenimiento</button><button class="chip" data-filter="Frenos">Frenos</button><button class="chip" data-filter="Motor">Motor</button><button class="chip" data-filter="Electricidad">Electricidad</button></div>
+  <div id="repairList" class="cards"></div>
+</div>
+</section>
+
+<section class="section band" id="como-funciona">
+<div class="wrap">
+  <div class="section-head"><div><div class="kicker">Flujo sencillo</div><h2>De la avería a la solución</h2></div><p>Una estructura pensada para crecer con información técnica profesional y una base de datos más amplia.</p></div>
+  <div class="steps"><div class="step"><div class="n">1</div><h3>Selecciona tu coche</h3><p>Filtra por marca, modelo, año y motorización para acotar la información.</p></div><div class="step"><div class="n">2</div><h3>Consulta reparación u OBD</h3><p>Busca por síntoma, componente o código de avería para abrir una ficha orientativa.</p></div><div class="step"><div class="n">3</div><h3>Sigue la guía</h3><p>Revisa herramientas, piezas, seguridad y pasos antes de intervenir en el vehículo.</p></div></div>
+</div>
+</section>
+
+<section class="section" id="contacto">
+<div class="wrap contact">
+  <div class="panel contact-card"><div class="kicker">Contacto</div><h2>¿Necesitas ayuda con tu vehículo?</h2><p>MotorFix Pro está planteado como una plataforma de reparación y diagnóstico. Puedes contactar para consultas o futuras colaboraciones.</p><div class="contact-actions"><a class="btn primary" href="tel:+34663667137">📞 663 667 137</a><a class="btn ghost" href="mailto:danimoriles93@gmail.com">✉️ Enviar email</a></div></div>
+  <div class="panel"><h3>Próxima evolución</h3><div class="notice">Esta versión funciona sin Autodata. La estructura está preparada para que más adelante un backend pueda incorporar datos técnicos licenciados, pares de apriete, especificaciones, intervalos y procedimientos por vehículo.</div><div class="features"><div class="feature"><i>🗃️</i><b>Base de datos</b><span>Más vehículos y reparaciones</span></div><div class="feature"><i>🔐</i><b>Área profesional</b><span>Contenido técnico verificado</span></div></div></div>
+</div>
+</section>
+</main>
+
+<footer><div class="wrap foot"><span>© 2026 MotorFix Pro</span><span>Contenido educativo y orientativo. Verifica especificaciones críticas con documentación del fabricante.</span></div></footer>
+
+<div class="modal" id="detailModal" onclick="modalBackdrop(event)">
+  <div class="sheet">
+    <div class="sheet-top"><div><div class="kicker">Guía de reparación</div><h2 id="detailTitle" style="margin:8px 0 0"></h2></div><button class="close" onclick="closeDetail()">Cerrar ✕</button></div>
+    <div id="detailBody"></div>
+  </div>
+</div>
+
+<script>
+const vehicles=[
+ {brand:"Audi",model:"A3 8V",from:2012,to:2020,engines:["1.0 TFSI","1.4 TFSI","1.5 TFSI","1.6 TDI","2.0 TDI"]},
+ {brand:"BMW",model:"Serie 3 F30",from:2011,to:2019,engines:["318i","320i","328i","318d","320d"]},
+ {brand:"Mercedes-Benz",model:"Clase A W176",from:2012,to:2018,engines:["A180","A200","A220 CDI","A180 CDI"]},
+ {brand:"Peugeot",model:"308 II",from:2013,to:2021,engines:["1.2 PureTech","1.6 THP","1.5 BlueHDi","1.6 BlueHDi"]},
+ {brand:"Renault",model:"Mégane IV",from:2015,to:2023,engines:["1.3 TCe","1.5 dCi","1.6 dCi"]},
+ {brand:"SEAT",model:"León 5F",from:2012,to:2020,engines:["1.2 TSI","1.4 TSI","1.5 TSI","1.6 TDI","2.0 TDI"]},
+ {brand:"Toyota",model:"Corolla E210",from:2018,to:2026,engines:["1.2 Turbo","1.8 Hybrid","2.0 Hybrid"]},
+ {brand:"Volkswagen",model:"Golf VII",from:2012,to:2020,engines:["1.0 TSI","1.4 TSI","1.5 TSI","1.6 TDI","2.0 TDI"]}
+];
+
+const repairs=[
+ {id:1,cat:"Mantenimiento",icon:"🛢️",title:"Cambio de aceite y filtro",desc:"Mantenimiento esencial para proteger el motor y conservar una lubricación correcta.",difficulty:"Fácil",time:"35–60 min",cost:"35–90 €",tools:["Juego de llaves","Recipiente para aceite","Llave de filtro","Embudo","Guantes"],parts:["Aceite con especificación correcta","Filtro de aceite","Arandela del tapón si aplica"],warnings:["Trabaja con el vehículo estable y en superficie plana.","No viertas aceite usado al desagüe; entrégalo en un punto autorizado."],steps:["Confirma la especificación y cantidad de aceite del motor.","Eleva el vehículo de forma segura si necesitas acceso inferior.","Retira el tapón de vaciado y deja escurrir el aceite.","Sustituye el filtro de aceite y lubrica su junta si corresponde.","Monta el tapón con su arandela y el par especificado por el fabricante.","Rellena gradualmente, arranca brevemente, espera y verifica nivel y posibles fugas."]},
+ {id:2,cat:"Frenos",icon:"🛑",title:"Sustitución de pastillas de freno",desc:"Guía de referencia para revisar y sustituir pastillas con comprobación visual del disco.",difficulty:"Media",time:"60–120 min",cost:"45–180 €",tools:["Gato y borriquetas","Llave de rueda","Juego de vasos","Útil retrae pistones"],parts:["Juego de pastillas compatible","Sensor de desgaste si equipa"],warnings:["Nunca trabajes bajo un coche sostenido únicamente por el gato.","Después del montaje, bombea el pedal antes de mover el vehículo."],steps:["Afloja ligeramente los tornillos de rueda antes de elevar.","Eleva el vehículo y apóyalo correctamente.","Retira rueda y comprueba estado de disco, latiguillos y pinza.","Desmonta la pinza según el sistema y retrae el pistón con el útil adecuado.","Monta pastillas nuevas respetando chapas, muelles y sensores.","Monta la pinza y la rueda con los pares correctos.","Bombea el pedal de freno y verifica nivel del líquido antes de circular."]},
+ {id:3,cat:"Electricidad",icon:"🔋",title:"Cambio de batería",desc:"Sustitución de batería de 12 V con comprobaciones básicas del sistema de carga.",difficulty:"Fácil",time:"20–45 min",cost:"80–220 €",tools:["Llaves o vasos","Guantes","Multímetro opcional"],parts:["Batería de capacidad y tecnología compatibles"],warnings:["Algunos vehículos requieren registro/codificación de la batería nueva.","Evita cortocircuitar los bornes con herramientas metálicas."],steps:["Apaga el vehículo y conserva los datos necesarios de radio/configuración.","Desconecta primero el borne negativo y después el positivo.","Retira la sujeción y extrae la batería con cuidado.","Coloca la nueva batería y fija correctamente la sujeción.","Conecta primero positivo y después negativo.","Comprueba arranque y, si aplica, registra la batería con herramienta de diagnosis."]},
+ {id:4,cat:"Motor",icon:"🌬️",title:"Cambio de filtro de aire",desc:"Mejora el flujo de admisión y ayuda a mantener el motor funcionando correctamente.",difficulty:"Fácil",time:"15–30 min",cost:"15–45 €",tools:["Destornillador o Torx según modelo","Aspirador opcional"],parts:["Filtro de aire compatible"],warnings:["Evita que entren objetos o suciedad en la admisión."],steps:["Localiza la caja del filtro de aire.","Abre grapas o tornillos de la tapa.","Retira el filtro antiguo y observa su orientación.","Limpia suavemente la caja sin introducir suciedad en la admisión.","Instala el filtro nuevo correctamente asentado.","Cierra la tapa asegurando todos los puntos de fijación."]},
+ {id:5,cat:"Motor",icon:"⚡",title:"Sustitución de bujías",desc:"Revisión y cambio de bujías en motores gasolina siguiendo la especificación correcta.",difficulty:"Media",time:"45–120 min",cost:"30–140 €",tools:["Vaso de bujía","Carraca y alargador","Llave dinamométrica"],parts:["Bujías con referencia correcta"],warnings:["Trabaja con el motor frío.","El apriete incorrecto puede dañar la rosca de la culata."],steps:["Retira cubiertas necesarias y desconecta las bobinas.","Limpia alrededor de los pozos antes de extraer las bujías.","Retira las bujías una a una e inspecciona su estado.","Compara referencia, longitud y tipo de las nuevas.","Instálalas a mano primero para evitar roscado cruzado.","Aprieta al par indicado por el fabricante y vuelve a montar las bobinas."]},
+ {id:6,cat:"Mantenimiento",icon:"💧",title:"Cambio de filtro de habitáculo",desc:"Mejora la calidad del aire interior y el rendimiento del sistema de climatización.",difficulty:"Fácil",time:"15–40 min",cost:"12–40 €",tools:["Destornillador/Torx según modelo"],parts:["Filtro de habitáculo o carbón activo compatible"],warnings:["Respeta la dirección de flujo indicada en el filtro."],steps:["Localiza el alojamiento del filtro, normalmente tras la guantera o en la zona del cortafuegos.","Retira las tapas o fijaciones necesarias.","Extrae el filtro usado observando la flecha de flujo.","Limpia el alojamiento de hojas y residuos.","Introduce el nuevo filtro en la orientación correcta.","Monta de nuevo todas las tapas y fijaciones."]},
+ {id:7,cat:"Frenos",icon:"🧪",title:"Revisión del líquido de frenos",desc:"Comprobación visual del nivel y estado del líquido con atención a intervalos de sustitución.",difficulty:"Fácil",time:"10–20 min",cost:"0–20 €",tools:["Linterna","Guantes"],parts:["Líquido de frenos de especificación correcta si procede"],warnings:["El líquido de frenos puede dañar la pintura.","No mezcles especificaciones incompatibles."],steps:["Localiza el depósito del líquido de frenos.","Comprueba el nivel entre las marcas MIN y MAX.","Observa color y contaminación visible.","Si el nivel es bajo, revisa antes el desgaste de pastillas y posibles fugas.","Consulta el intervalo de sustitución recomendado para el vehículo."]},
+ {id:8,cat:"Electricidad",icon:"💡",title:"Diagnosis de fallo de iluminación",desc:"Ruta básica para identificar una lámpara, fusible, conexión o módulo relacionado con la iluminación.",difficulty:"Media",time:"20–90 min",cost:"5–80 €",tools:["Multímetro","Extractor de fusibles","Herramientas básicas"],parts:["Lámpara o fusible según diagnóstico"],warnings:["Sustituye fusibles solo por el mismo amperaje.","En faros xenón puede existir alta tensión."],steps:["Identifica qué función de iluminación falla y si es unilateral o general.","Comprueba visualmente la lámpara cuando sea accesible.","Consulta y verifica el fusible correspondiente.","Mide alimentación y masa en el conector si tienes conocimientos para hacerlo.","Si hay alimentación correcta y la lámpara está bien, considera módulo, cableado o unidad de control."]}
+];
+
+const obd={
+ "P0420":{title:"Eficiencia del catalizador por debajo del umbral (Banco 1)",desc:"La ECU detecta que el catalizador no está reduciendo emisiones con la eficacia esperada.",causes:"Catalizador degradado, fuga de escape, sensor lambda defectuoso, mezcla incorrecta o fallos de combustión previos.",checks:"Revisar fugas, historial de fallos de encendido, datos en vivo de sondas lambda y estado general del escape."},
+ "P0301":{title:"Fallo de encendido detectado en cilindro 1",desc:"Se ha detectado combustión irregular en el cilindro 1.",causes:"Bujía, bobina, inyector, compresión, fuga de admisión o problema de combustible.",checks:"Intercambiar bobina/bujía con otro cilindro cuando sea apropiado, revisar correcciones y efectuar pruebas de compresión si el fallo persiste."},
+ "P0171":{title:"Mezcla demasiado pobre (Banco 1)",desc:"La ECU necesita enriquecer más de lo normal para mantener la mezcla objetivo.",causes:"Entrada de aire no medida, caudalímetro, baja presión de combustible, inyector o fuga de escape antes de la sonda.",checks:"Buscar fugas de vacío, revisar fuel trims, presión de combustible y datos del MAF."},
+ "P0101":{title:"Rango/rendimiento del caudalímetro de aire",desc:"La señal del MAF no coincide con el caudal esperado según otras variables del motor.",causes:"MAF sucio/defectuoso, fuga de admisión, filtro muy obstruido, cableado o datos incoherentes.",checks:"Inspeccionar admisión, conector y cableado; comparar lectura MAF con valores esperados y otros sensores."},
+ "P0401":{title:"Flujo insuficiente de recirculación EGR",desc:"La ECU detecta menos flujo EGR del previsto.",causes:"EGR atascada, conductos obstruidos por carbonilla, actuador o sensor de presión/posición.",checks:"Revisar funcionamiento comandado de EGR, conductos, carbonilla y datos del sensor relacionado."}
+};
+
+const $=id=>document.getElementById(id);
+const brand=$("brand"),model=$("model"),year=$("year"),engine=$("engine");
+function unique(a){return [...new Set(a)]}
+function initVehicle(){
+ brand.innerHTML='<option value="">Todas las marcas</option>'+unique(vehicles.map(v=>v.brand)).map(x=>`<option>${x}</option>`).join("");
+ fillModels(); fillYears(); fillEngines();
+}
+function fillModels(){
+ const list=brand.value?vehicles.filter(v=>v.brand===brand.value):vehicles;
+ model.innerHTML='<option value="">Todos los modelos</option>'+unique(list.map(v=>v.model)).map(x=>`<option>${x}</option>`).join("");
+ fillYears(); fillEngines();
+}
+function currentVehicles(){return vehicles.filter(v=>(!brand.value||v.brand===brand.value)&&(!model.value||v.model===model.value))}
+function fillYears(){
+ const list=currentVehicles(); let yrs=[]; list.forEach(v=>{for(let y=v.from;y<=v.to;y++)yrs.push(y)});
+ year.innerHTML='<option value="">Cualquier año</option>'+unique(yrs).sort((a,b)=>b-a).map(x=>`<option>${x}</option>`).join("");
+}
+function fillEngines(){
+ const list=currentVehicles(); engine.innerHTML='<option value="">Cualquier motor</option>'+unique(list.flatMap(v=>v.engines)).map(x=>`<option>${x}</option>`).join("");
+}
+brand.addEventListener("change",fillModels); model.addEventListener("change",()=>{fillYears();fillEngines()});
+
+let category="all";
+document.querySelectorAll(".chip").forEach(c=>c.addEventListener("click",()=>{
+ document.querySelectorAll(".chip").forEach(x=>x.classList.remove("active")); c.classList.add("active"); category=c.dataset.filter; renderRepairs();
+}));
+$("repairSearch").addEventListener("input",renderRepairs);
+function applyFilters(){renderRepairs();document.querySelector("#reparaciones").scrollIntoView({behavior:"smooth"})}
+function renderRepairs(){
+ const q=$("repairSearch").value.trim().toLowerCase();
+ const filtered=repairs.filter(r=>(category==="all"||r.cat===category)&&(!q||(r.title+" "+r.desc+" "+r.cat).toLowerCase().includes(q)));
+ $("repairList").innerHTML=filtered.length?filtered.map(r=>`<article class="repair"><div class="icon">${r.icon}</div><h3>${r.title}</h3><p>${r.desc}</p><div class="tags"><span class="tag">${r.cat}</span><span class="tag difficulty ${r.difficulty==="Fácil"?"easy":r.difficulty==="Media"?"medium":"hard"}">${r.difficulty}</span><span class="tag">⏱ ${r.time}</span></div><div class="card-bottom"><small>Desde ${r.cost}</small><button class="btn ghost small" onclick="openDetail(${r.id})">Ver guía →</button></div></article>`).join(""):'<div class="empty">No hay guías que coincidan con esa búsqueda. Prueba con otra palabra.</div>';
+}
+function openDetail(id){
+ const r=repairs.find(x=>x.id===id); $("detailTitle").textContent=r.title;
+ $("detailBody").innerHTML=`<div class="tags" style="margin-top:12px"><span class="tag">${r.cat}</span><span class="tag">${r.difficulty}</span><span class="tag">⏱ ${r.time}</span><span class="tag">💶 ${r.cost}</span></div>
+ <div class="detail-grid"><div class="box"><h4>🧰 Herramientas</h4><ul>${r.tools.map(x=>`<li>${x}</li>`).join("")}</ul></div><div class="box"><h4>📦 Piezas / consumibles</h4><ul>${r.parts.map(x=>`<li>${x}</li>`).join("")}</ul></div></div>
+ <div class="box" style="margin-top:14px"><h4>⚠️ Seguridad</h4><ul>${r.warnings.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+ <div class="box" style="margin-top:14px"><h4>🔧 Procedimiento orientativo</h4><ul class="steps-list">${r.steps.map(x=>`<li>${x}</li>`).join("")}</ul></div>
+ <div class="notice" style="margin-top:14px">Antes de realizar la intervención, confirma especificaciones, pares de apriete y procedimiento exacto para tu vehículo y motor.</div>`;
+ $("detailModal").classList.add("open"); document.body.style.overflow="hidden";
+}
+function closeDetail(){$("detailModal").classList.remove("open");document.body.style.overflow=""}
+function modalBackdrop(e){if(e.target.id==="detailModal")closeDetail()}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeDetail()});
+
+function lookupObd(){
+ const code=$("obdInput").value.trim().toUpperCase(); const r=obd[code]; const el=$("obdResult");
+ if(!code){el.className="obd-result show";el.innerHTML="<p>Introduce un código OBD‑II.</p>";return}
+ if(!r){el.className="obd-result show";el.innerHTML=`<div class="code">${code}</div><h4>Código no incluido todavía</h4><p>La base demostrativa contiene P0420, P0301, P0171, P0101 y P0401. La versión completa podrá ampliar esta biblioteca desde backend.</p>`;return}
+ el.className="obd-result show";el.innerHTML=`<div class="code">${code}</div><h4>${r.title}</h4><p>${r.desc}</p><p style="margin-top:9px"><b>Posibles causas:</b> ${r.causes}</p><p style="margin-top:7px"><b>Comprobaciones:</b> ${r.checks}</p>`;
+}
+$("obdInput").addEventListener("keydown",e=>{if(e.key==="Enter")lookupObd()});
+initVehicle();renderRepairs();
+</script>
+</body>
+</html>
