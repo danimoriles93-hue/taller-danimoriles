@@ -189,7 +189,7 @@ footer{padding-top:26px;padding-bottom:26px}
         <label for="partBrand">Marca preferida (opcional)</label>
         <input id="partBrand" placeholder="Ej.: Bosch, Brembo, Mann-Filter...">
       </div>
-      <button onclick="renderPartComparison()">Comparar</button>
+      <button onclick="showPartsOptions()">Ver tiendas</button>
     </div>
 
     <div class="parts-chips">
@@ -208,7 +208,7 @@ footer{padding-top:26px;padding-bottom:26px}
     </div>
 
     <div id="partsShopResults" class="parts-shops"></div>
-    <button class="compare-all" onclick="openAllPartsShops()">Abrir comparación en las 4 tiendas</button>
+    <button class="compare-all" onclick="showPartsOptions()">Mostrar opciones en las 4 tiendas</button>
 
     <div class="compare-note">
       El comparador no muestra precios inventados ni desactualizados: abre la búsqueda real en cada tienda. Antes de comprar, confirma referencia OEM, medidas, motorización y compatibilidad exacta.
@@ -260,13 +260,14 @@ footer{padding-top:26px;padding-bottom:26px}
     <h2 id="guias-seo">Reparación y diagnóstico del coche</h2>
     <p class="seo-copy">Accede directamente a guías de mantenimiento, frenos, batería, filtros y códigos de avería OBD-II. Estas páginas están preparadas para que los buscadores puedan indexar cada tema de forma independiente.</p>
     <div class="seo-linkgrid">
-      <a class="seo-link" href="#reparacion-1" data-repair-id="1"><b>Cambio de aceite y filtro</b><span>Pasos, herramientas y precauciones.</span></a>
-      <a class="seo-link" href="#reparacion-2" data-repair-id="2"><b>Cambiar pastillas de freno</b><span>Guía orientativa de sustitución.</span></a>
-      <a class="seo-link" href="#reparacion-3" data-repair-id="3"><b>Cambiar batería del coche</b><span>Desconexión, montaje y comprobaciones.</span></a>
-      <a class="seo-link" href="#reparacion-4" data-repair-id="4"><b>Cambiar filtro de aire</b><span>Mantenimiento de la admisión.</span></a>
-      <a class="seo-link" href="#reparacion-5" data-repair-id="5"><b>Cambiar bujías</b><span>Guía para motores gasolina.</span></a>
-      <a class="seo-link" href="#codigo-P0420" data-obd-code="P0420"><b>Código OBD P0420</b><span>Causas y comprobaciones habituales.</span></a>
+      <a class="seo-link" href="/reparaciones/cambio-aceite-filtro.html"><b>Cambio de aceite y filtro</b><span>Pasos, herramientas y precauciones.</span></a>
+      <a class="seo-link" href="/reparaciones/cambiar-pastillas-freno.html"><b>Cambiar pastillas de freno</b><span>Guía orientativa de sustitución.</span></a>
+      <a class="seo-link" href="/reparaciones/cambio-bateria-coche.html"><b>Cambiar batería del coche</b><span>Desconexión, montaje y comprobaciones.</span></a>
+      <a class="seo-link" href="/reparaciones/cambio-filtro-aire.html"><b>Cambiar filtro de aire</b><span>Mantenimiento de la admisión.</span></a>
+      <a class="seo-link" href="/reparaciones/cambiar-bujias.html"><b>Cambiar bujías</b><span>Guía para motores gasolina.</span></a>
+      <a class="seo-link" href="/obd/p0420.html"><b>Código OBD P0420</b><span>Causas y comprobaciones habituales.</span></a>
     </div>
+    <p style="margin-top:18px"><a class="btn primary" href="/reparaciones">Ver las 40 guías completas →</a></p>
     <div class="seo-faq">
       <details><summary>¿Cómo busco una reparación para mi coche?</summary><p>Selecciona marca, modelo, año y motor en el buscador y escribe la reparación o componente que necesitas.</p></details>
       <details><summary>¿Qué información ofrecen las guías?</summary><p>Incluyen dificultad, tiempo orientativo, herramientas, piezas, precauciones y una secuencia general de trabajo.</p></details>
@@ -276,7 +277,7 @@ footer{padding-top:26px;padding-bottom:26px}
 </section>
 </main>
 
-<footer><div class="wrap foot"><span>© 2026 MotorFix Pro</span><span>Contenido educativo y orientativo. Verifica especificaciones críticas con documentación del fabricante.</span></div></footer>
+<footer><div class="wrap foot"><span>© 2026 MotorFix Pro · <a href="/legal">Aviso legal</a></span><span>Contenido educativo y orientativo. Verifica especificaciones críticas con documentación del fabricante.</span></div></footer>
 
 <div class="modal" id="detailModal" onclick="modalBackdrop(event)">
   <div class="sheet">
@@ -1311,7 +1312,8 @@ function openDetail(id){
  <div class="box" style="margin-top:14px"><h4>⚠️ Seguridad</h4><ul>${r.warnings.map(x=>`<li>${x}</li>`).join("")}</ul></div>
  <div class="box" style="margin-top:14px"><h4>🔧 Procedimiento orientativo</h4><ul class="steps-list">${r.steps.map(x=>`<li>${x}</li>`).join("")}</ul></div>
  ${repairVideoHtml(r)}
- <div class="notice" style="margin-top:14px">Antes de realizar la intervención, confirma especificaciones, pares de apriete y procedimiento exacto para tu vehículo y motor. Los vídeos son material externo de referencia y pueden no corresponder exactamente a tu variante.</div>`;
+ <div class="notice" style="margin-top:14px">Antes de realizar la intervención, confirma especificaciones, pares de apriete y procedimiento exacto para tu vehículo y motor. Los vídeos son material externo de referencia y pueden no corresponder exactamente a tu variante.</div>
+ ${r.slug?`<p style="margin-top:16px"><a class="btn primary" href="/reparaciones/${encodeURIComponent(r.slug)}.html">Abrir guía completa e indexable →</a></p>`:""}`;
  $("detailModal").classList.add("open"); document.body.style.overflow="hidden";
 }
 function closeDetail(){$("detailModal").classList.remove("open");document.body.style.overflow=""}
@@ -1346,7 +1348,26 @@ document.addEventListener("click",e=>{
  }
 });
 window.addEventListener("hashchange",openLinkedContent);
-initVehicle();renderRepairs();updateVehicleVideos();openLinkedContent();
+async function loadPublishedGuides(){
+ try{
+   const response=await fetch("/api/public/guides",{headers:{Accept:"application/json"}});
+   if(!response.ok)return;
+   const published=await response.json();
+   published.forEach(g=>{
+     const existing=repairs.find(r=>r.title.toLowerCase()===g.title.toLowerCase());
+     const normalized={slug:g.slug,cat:g.category,desc:g.description,difficulty:g.difficulty,time:g.time,cost:g.cost,tools:g.tools,parts:g.parts,warnings:g.warnings,steps:g.steps};
+     if(existing) Object.assign(existing,normalized);
+     else repairs.push({id:1000+g.id,icon:"🔧",title:g.title,...normalized});
+   });
+   renderRepairs();
+   const requested=new URLSearchParams(location.search).get("reparacion");
+   if(requested){
+     const match=repairs.find(r=>r.slug===requested);
+     if(match){$("repairSearch").value=match.title;renderRepairs();}
+   }
+ }catch(_error){/* La portada conserva las guías integradas si la API no responde. */}
+}
+initVehicle();renderRepairs();updateVehicleVideos();openLinkedContent();loadPublishedGuides();
 
 function ytSearchUrl(q){ return "https://www.youtube.com/results?search_query="+encodeURIComponent(q); }
 const partsShops=[
@@ -1398,11 +1419,11 @@ function renderPartComparison(){
       <a class="button" target="_blank" rel="noopener" href="${shopSearchUrl(s.domain,q)}">Buscar este recambio</a>
     </article>`).join("");
 }
-function openAllPartsShops(){
+function showPartsOptions(){
+  renderPartComparison();
   const part=(document.getElementById("partSearch")?.value||"").trim();
-  if(!part){ renderPartComparison(); document.getElementById("partSearch")?.focus(); return; }
-  const q=partQuery();
-  partsShops.forEach((s,i)=>setTimeout(()=>window.open(shopSearchUrl(s.domain,q),"_blank","noopener"),i*180));
+  if(!part){document.getElementById("partSearch")?.focus();return}
+  document.getElementById("partsShopResults")?.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 ["brand","model","year","fuel","engine","power"].forEach(id=>{
   const el=document.getElementById(id);
