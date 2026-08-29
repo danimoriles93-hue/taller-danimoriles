@@ -249,7 +249,7 @@ footer{padding-top:26px;padding-bottom:26px}
 <section class="section" id="reparaciones">
 <div class="wrap">
   <div class="section-head"><div><h2>Reparaciones populares</h2><p class="muted">Mantenimiento, averías habituales y reparaciones útiles para cualquier vehículo.</p></div><p>Guías prácticas con dificultad, tiempo, herramientas y pasos orientativos.</p></div>
-  <div class="filterbar"><button class="chip active" data-filter="all">Todas</button><button class="chip" data-filter="Mantenimiento">Mantenimiento</button><button class="chip" data-filter="Frenos">Frenos</button><button class="chip" data-filter="Motor">Motor</button><button class="chip" data-filter="Electricidad">Electricidad</button></div>
+  <div class="filterbar"><button class="chip active" data-filter="all">Todas</button><button class="chip" data-filter="Mantenimiento">Mantenimiento</button><button class="chip" data-filter="Neumáticos">Neumáticos</button><button class="chip" data-filter="Batería">Batería</button><button class="chip" data-filter="Frenos">Frenos</button><button class="chip" data-filter="Motor">Motor</button><button class="chip" data-filter="Electricidad">Electricidad</button></div>
   <div id="repairList" class="cards"></div>
 </div>
 </section>
@@ -260,12 +260,12 @@ footer{padding-top:26px;padding-bottom:26px}
     <h2 id="guias-seo">Reparación y diagnóstico del coche</h2>
     <p class="seo-copy">Accede directamente a guías de mantenimiento, frenos, batería, filtros y códigos de avería OBD-II. Estas páginas están preparadas para que los buscadores puedan indexar cada tema de forma independiente.</p>
     <div class="seo-linkgrid">
-      <a class="seo-link" href="/reparaciones/cambio-aceite-filtro.html"><b>Cambio de aceite y filtro</b><span>Pasos, herramientas y precauciones.</span></a>
-      <a class="seo-link" href="/reparaciones/cambiar-pastillas-freno.html"><b>Cambiar pastillas de freno</b><span>Guía orientativa de sustitución.</span></a>
-      <a class="seo-link" href="/reparaciones/cambio-bateria-coche.html"><b>Cambiar batería del coche</b><span>Desconexión, montaje y comprobaciones.</span></a>
-      <a class="seo-link" href="/reparaciones/cambio-filtro-aire.html"><b>Cambiar filtro de aire</b><span>Mantenimiento de la admisión.</span></a>
-      <a class="seo-link" href="/reparaciones/cambiar-bujias.html"><b>Cambiar bujías</b><span>Guía para motores gasolina.</span></a>
-      <a class="seo-link" href="/obd/p0420.html"><b>Código OBD P0420</b><span>Causas y comprobaciones habituales.</span></a>
+      <a class="seo-link" href="#reparacion-1" data-repair-id="1"><b>Cambio de aceite y filtro</b><span>Pasos, herramientas y precauciones.</span></a>
+      <a class="seo-link" href="#reparacion-2" data-repair-id="2"><b>Cambiar pastillas de freno</b><span>Guía orientativa de sustitución.</span></a>
+      <a class="seo-link" href="#reparacion-3" data-repair-id="3"><b>Cambiar batería del coche</b><span>Desconexión, montaje y comprobaciones.</span></a>
+      <a class="seo-link" href="#reparacion-4" data-repair-id="4"><b>Cambiar filtro de aire</b><span>Mantenimiento de la admisión.</span></a>
+      <a class="seo-link" href="#reparacion-5" data-repair-id="5"><b>Cambiar bujías</b><span>Guía para motores gasolina.</span></a>
+      <a class="seo-link" href="#codigo-P0420" data-obd-code="P0420"><b>Código OBD P0420</b><span>Causas y comprobaciones habituales.</span></a>
     </div>
     <div class="seo-faq">
       <details><summary>¿Cómo busco una reparación para mi coche?</summary><p>Selecciona marca, modelo, año y motor en el buscador y escribe la reparación o componente que necesitas.</p></details>
@@ -1272,7 +1272,7 @@ function renderRepairs(){
    const cost=r.cost||"consultar";
    const diff=(r.difficulty||"Orientativa");
    const diffClass=(diff==="Muy fácil"||diff==="Fácil")?"easy":diff==="Media"?"medium":"hard";
-   return `<article class="repair"><div class="icon">${icon}</div><h3>${r.title}</h3><p>${desc}</p><div class="tags"><span class="tag">${cat}</span><span class="tag difficulty ${diffClass}">${diff}</span><span class="tag">⏱ ${r.time||"Tiempo variable"}</span></div><div class="card-bottom"><small>${cost==="consultar"?"Coste: consultar":"Desde "+cost}</small><button class="btn ghost small" onclick="openDetail(${r.id})">Ver guía →</button></div></article>`;
+   return `<article class="repair" id="reparacion-${r.id}"><div class="icon">${icon}</div><h3>${r.title}</h3><p>${desc}</p><div class="tags"><span class="tag">${cat}</span><span class="tag difficulty ${diffClass}">${diff}</span><span class="tag">⏱ ${r.time||"Tiempo variable"}</span></div><div class="card-bottom"><small>${cost==="consultar"?"Coste: consultar":"Desde "+cost}</small><a class="btn ghost small" href="#reparacion-${r.id}" data-repair-id="${r.id}">Ver guía →</a></div></article>`;
  }).join(""):'<div class="empty">No hay guías que coincidan con esa búsqueda. Prueba con otra palabra.</div>';
 }
 function selectedVehicleText(){
@@ -1325,7 +1325,28 @@ function lookupObd(){
  el.className="obd-result show";el.innerHTML=`<div class="code">${code}</div><h4>${r.title}</h4><p>${r.desc}</p><p style="margin-top:9px"><b>Posibles causas:</b> ${r.causes}</p><p style="margin-top:7px"><b>Comprobaciones:</b> ${r.checks}</p>`;
 }
 $("obdInput").addEventListener("keydown",e=>{if(e.key==="Enter")lookupObd()});
-initVehicle();renderRepairs();updateVehicleVideos();
+function openLinkedContent(){
+ const repairMatch=location.hash.match(/^#reparacion-(\d+)$/);
+ if(repairMatch){openDetail(Number(repairMatch[1]));return}
+ const obdMatch=location.hash.match(/^#codigo-([A-Z0-9]+)$/i);
+ if(obdMatch){
+   $("obdInput").value=obdMatch[1].toUpperCase();
+   lookupObd();
+   document.querySelector("#buscador").scrollIntoView({behavior:"smooth"});
+ }
+}
+document.addEventListener("click",e=>{
+ const repairLink=e.target.closest("[data-repair-id]");
+ if(repairLink) openDetail(Number(repairLink.dataset.repairId));
+ const obdLink=e.target.closest("[data-obd-code]");
+ if(obdLink){
+   $("obdInput").value=obdLink.dataset.obdCode;
+   lookupObd();
+   document.querySelector("#buscador").scrollIntoView({behavior:"smooth"});
+ }
+});
+window.addEventListener("hashchange",openLinkedContent);
+initVehicle();renderRepairs();updateVehicleVideos();openLinkedContent();
 
 function ytSearchUrl(q){ return "https://www.youtube.com/results?search_query="+encodeURIComponent(q); }
 const partsShops=[
